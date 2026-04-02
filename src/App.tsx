@@ -99,11 +99,19 @@ export default function App() {
   const [currentVolumeIdx, setCurrentVolumeIdx] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
   const [calibrationWidth, setCalibrationWidth] = useState(250); // Initial pixel width for calibration box
-  const [calibMethod, setCalibMethod] = useState<'ruler' | 'card' | 'screen'>('ruler');
+  const [calibMethod, setCalibMethod] = useState<'ruler' | 'card' | 'screen'>('screen');
   const [displayMode, setDisplayMode] = useState<'vertical' | 'horizontal' | 'both' | 'triple'>('vertical');
-  const [screenInches, setScreenInches] = useState<number>(6.1); // Default to common 6.1 inch screen
-  const [selectedDevice, setSelectedDevice] = useState<number>(6.1);
+  const [screenInches, setScreenInches] = useState<number>(6.5); // Default to iPhone 11 Pro Max (6.5 inch)
+  const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+
+  // Update theme color for status bar based on focus mode
+  useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', focusedId ? '#000000' : '#0f172a');
+    }
+  }, [focusedId]);
 
   // Load calibration from localStorage
   useEffect(() => {
@@ -172,7 +180,7 @@ export default function App() {
           </div>
           <h2 className="text-2xl font-bold text-white">Lưu ý quan trọng</h2>
           <p className="text-slate-300 text-sm leading-relaxed">
-            Chú ý không chạm màn hình vào đối tượng khám; hình ảnh chỉ mang tính đối chiếu, không thay thế siêu âm và thước Prader.
+            Không chạm màn hình vào đối tượng khám; hình ảnh chỉ mang tính đối chiếu, không thay thế siêu âm và thước Prader.
           </p>
           <div className="flex gap-3 pt-2">
             <button 
