@@ -52,7 +52,7 @@ const t = {
     sliderHint: "Kéo thanh trượt hoặc dùng nút +/- để tinh chỉnh",
     confirmCalib: "Xác nhận hiệu chuẩn",
     author: "Sáng chế độc quyền của BS. Đỗ Tiến Sơn",
-    worldFirst: "Orchidometer kĩ thuật số đầu tiên trên thế giới sử dụng phương pháp Chipkevitch",
+    worldFirst: "Orchidometer kĩ thuật số đầu tiên sử dụng phương pháp Chipkevitch",
     stage1: "Giai đoạn Tiền dậy thì",
     stage2: "Giai đoạn Dậy thì",
     stage3: "Giai đoạn Trưởng thành",
@@ -95,7 +95,7 @@ const t = {
     sliderHint: "Drag slider or use +/- to adjust",
     confirmCalib: "Confirm Calibration",
     author: "Exclusive invention by Dr. Do Tien Son",
-    worldFirst: "The world's first digital Orchidometer using the Chipkevitch method",
+    worldFirst: "The first digital Orchidometer using the Chipkevitch method",
     stage1: "Pre-pubertal Stage",
     stage2: "Pubertal Stage",
     stage3: "Adult Stage",
@@ -337,6 +337,7 @@ export default function App() {
             {t[lang].promoDesc}
           </p>
           <input
+            autoFocus
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
