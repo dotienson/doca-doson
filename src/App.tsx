@@ -26,6 +26,89 @@ const ORCHIDOMETER_DATA: Record<number, [number, number]> = {
 
 const VOLUMES = Object.keys(ORCHIDOMETER_DATA).map(Number).sort((a, b) => a - b);
 
+const t = {
+  vi: {
+    consentTitle: "Lưu ý quan trọng",
+    consentWarning1: "Không chạm màn hình vào đối tượng khám;",
+    consentWarning2: "Phương pháp so sánh hình ảnh chỉ mang tính sàng lọc khi không có sẵn dụng cụ khám, không thay thế siêu âm đo kích thước và thước Prader chuyên dụng",
+    cancel: "Huỷ",
+    confirm: "Xác nhận",
+    declinedTitle: "Kết thúc phiên sử dụng",
+    declinedDesc: "Ứng dụng sẽ không hoạt động khi người dùng không xác nhận về các lưu ý an toàn và chuyên môn",
+    exit: "Thoát",
+    calibTitle: "Hiệu chuẩn màn hình",
+    calibDesc: "Chọn vật thể tham chiếu để đồng bộ kích thước thực tế (mm) với màn hình của bạn.",
+    ruler: "Thước kẻ",
+    card: "Thẻ ATM",
+    screen: "Nhập Inch",
+    displayMode: "Chế độ hiển thị",
+    vertical: "Dọc",
+    horizontal: "Ngang",
+    both: "Cả 2",
+    triple: "3 Kích thước",
+    screenPrompt: "Chọn dòng máy của bạn hoặc nhập kích thước đường chéo màn hình.",
+    cardPrompt: "Khớp viền thẻ vào đây",
+    rulerPrompt: "Áp thước kẻ vật lý vào đoạn 5cm này",
+    sliderHint: "Kéo thanh trượt hoặc dùng nút +/- để tinh chỉnh",
+    confirmCalib: "Xác nhận hiệu chuẩn",
+    author: "Sáng chế độc quyền của BS. Đỗ Tiến Sơn",
+    worldFirst: "Orchidometer kĩ thuật số đầu tiên trên thế giới sử dụng phương pháp đối chiếu Chipkevitch",
+    stage1: "Giai đoạn Tiền dậy thì",
+    stage2: "Giai đoạn Dậy thì",
+    stage3: "Giai đoạn Trưởng thành",
+    subtitle: "BS. Đỗ Tiến Sơn TAHN",
+    guideTitle: "Hướng dẫn sử dụng",
+    guide1: "Thông báo trẻ và gia đình quy trình đối chiếu theo quy trình",
+    guide2: "Hiệu chuẩn màn hình với lựa chọn phù hợp, giải thích sơ bộ cho gia đình về các kích cỡ đối chiếu.",
+    guide3: "Sát khuẩn tay; Đeo găng tay khám ở tay bộc lộ đối tượng. Tay còn lại cầm điện thoại song song với đối tượng cần so sánh. Không đeo găng tay ở tay cầm điện thoại. Nếu cần dùng 2 tay để bộc lộ đối tượng đối chiếu: Hãy báo người hỗ trợ cầm thiết bị.",
+    guide4: "Sử dụng các nút mũi tên để thay đổi thể tích (ml). Chạm vào hình elip để vào Focus Mode.",
+    guide5: "Thông báo kết quả khám sàng lọc. Có thể đối chiếu với thước Prader và Siêu âm khi có chỉ định.",
+    guideNote: "Lưu ý: Kích thước elip trên màn hình đã được hiệu chuẩn theo mm thực tế. Luôn hiệu chuẩn trước mỗi lần sử dụng. Màn hình mặc định được cài đặt cho dòng iPhone 11 Pro Max.",
+    understood: "Xác nhận",
+    calibFactor: "Hệ số Hiệu chuẩn Màn hình"
+  },
+  en: {
+    consentTitle: "Important Notice",
+    consentWarning1: "Do not touch the screen to the examination subject;",
+    consentWarning2: "The image comparison method is for screening purposes only when examination tools are unavailable, and does not replace ultrasound sizing or a dedicated Prader orchidometer.",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    declinedTitle: "Session Ended",
+    declinedDesc: "The application will not operate unless the user confirms the safety and professional notices.",
+    exit: "Exit",
+    calibTitle: "Screen Calibration",
+    calibDesc: "Select a reference object to synchronize actual dimensions (mm) with your screen.",
+    ruler: "Ruler",
+    card: "Credit Card",
+    screen: "Screen Size",
+    displayMode: "Display Mode",
+    vertical: "Vertical",
+    horizontal: "Horizontal",
+    both: "Both",
+    triple: "3 Sizes",
+    screenPrompt: "Select your device model or enter screen diagonal size.",
+    cardPrompt: "Fit card edges here",
+    rulerPrompt: "Align physical ruler to this 5cm segment",
+    sliderHint: "Drag slider or use +/- to adjust",
+    confirmCalib: "Confirm Calibration",
+    author: "Exclusive invention by Dr. Do Tien Son",
+    worldFirst: "The world's first digital Orchidometer using the Chipkevitch comparison method",
+    stage1: "Pre-pubertal Stage",
+    stage2: "Pubertal Stage",
+    stage3: "Adult Stage",
+    subtitle: "Dr. Do Tien Son, ESPE, TAHN",
+    guideTitle: "Instructions for Use",
+    guide1: "Inform the child and family of the comparison procedure.",
+    guide2: "Calibrate the screen with the appropriate option, briefly explain the comparison sizes to the family.",
+    guide3: "Sanitize hands; Wear an examination glove on the hand exposing the subject. Hold the phone parallel to the subject with the other hand. Do not wear a glove on the hand holding the phone. If two hands are needed to expose the subject: Ask an assistant to hold the device.",
+    guide4: "Use the arrow buttons to change the volume (ml). Tap the ellipse to enter Focus Mode.",
+    guide5: "Announce the screening results. Can be compared with a Prader orchidometer and Ultrasound when indicated.",
+    guideNote: "Note: The ellipse size on the screen is calibrated to actual mm. Always calibrate before each use. The default screen is set for iPhone 11 Pro Max.",
+    understood: "Confirm",
+    calibFactor: "Standardized Calibration Active"
+  }
+};
+
 const DEVICE_PRESETS = [
   { name: 'Tùy chỉnh (Nhập tay)', size: 0 },
   { name: 'iPhone 12/13 mini', size: 5.4 },
@@ -47,23 +130,17 @@ const getStageStyle = (volume: number) => {
     text: 'text-emerald-500'
   };
   if (volume === 4) return {
-    bg: 'from-orange-400 to-orange-600 border-orange-300/50 shadow-orange-500/30',
-    text: 'text-orange-500'
+    bg: 'from-red-400 to-red-600 border-red-300/50 shadow-red-500/30',
+    text: 'text-red-500'
   };
   if (volume <= 12) return {
-    bg: 'from-blue-400 to-blue-600 border-blue-300/50 shadow-blue-500/30',
-    text: 'text-blue-500'
+    bg: 'from-yellow-400 to-amber-500 border-yellow-300/50 shadow-amber-400/30',
+    text: 'text-amber-500'
   };
   return {
-    bg: 'from-indigo-400 to-indigo-600 border-indigo-300/50 shadow-indigo-500/30',
-    text: 'text-indigo-500'
+    bg: 'from-orange-500 to-red-500 border-orange-400/50 shadow-red-500/30',
+    text: 'text-red-500'
   };
-};
-
-const getStageName = (volume: number) => {
-  if (volume <= 3) return 'Giai đoạn Tiền dậy thì';
-  if (volume <= 12) return 'Giai đoạn Dậy thì';
-  return 'Giai đoạn Trưởng thành';
 };
 
 const Ellipsoid = ({ id, widthMm, lengthMm, ppm, isHorizontal, styleObj, isFocused, isHidden, onClick }: any) => {
@@ -104,6 +181,7 @@ export default function App() {
   const [screenInches, setScreenInches] = useState<number>(6.5); // Default to iPhone 11 Pro Max (6.5 inch)
   const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [lang, setLang] = useState<'vi' | 'en'>('vi');
 
   // Update theme color for status bar based on focus mode
   useEffect(() => {
@@ -123,6 +201,10 @@ export default function App() {
     }
     if (savedMode) {
       setDisplayMode(savedMode as any);
+    }
+    const savedLang = localStorage.getItem('orchidometer_lang');
+    if (savedLang) {
+      setLang(savedLang as 'vi' | 'en');
     }
   }, []);
 
@@ -160,12 +242,20 @@ export default function App() {
 
   if (consentDeclined) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans">
+      <div 
+        style={{ 
+          paddingTop: 'var(--sat)', 
+          paddingBottom: 'var(--sab)',
+          paddingLeft: 'var(--sal)',
+          paddingRight: 'var(--sar)'
+        }}
+        className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
+      >
         <div className="bg-slate-800 p-8 rounded-3xl max-w-md border border-slate-700 space-y-4 shadow-2xl">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
-          <h2 className="text-xl font-bold text-white">Đã huỷ truy cập</h2>
-          <p className="text-slate-400">Bạn cần xác nhận các lưu ý an toàn để sử dụng ứng dụng này.</p>
-          <button onClick={() => setConsentDeclined(false)} className="mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors">Quay lại</button>
+          <h2 className="text-xl font-bold text-white">{t[lang].declinedTitle}</h2>
+          <p className="text-slate-400">{t[lang].declinedDesc}</p>
+          <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" className="mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors inline-block">{t[lang].exit}</a>
         </div>
       </div>
     );
@@ -173,27 +263,50 @@ export default function App() {
 
   if (!hasConsented) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans">
+      <div 
+        style={{ 
+          paddingTop: 'var(--sat)', 
+          paddingBottom: 'var(--sab)',
+          paddingLeft: 'var(--sal)',
+          paddingRight: 'var(--sar)'
+        }}
+        className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
+      >
         <div className="bg-slate-800 p-8 rounded-3xl max-w-md border border-slate-700 space-y-6 shadow-2xl">
           <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Lưu ý quan trọng</h2>
+          <h2 className="text-2xl font-bold text-white">{t[lang].consentTitle}</h2>
           <p className="text-slate-300 text-sm leading-relaxed">
-            Không chạm màn hình vào đối tượng khám; hình ảnh chỉ mang tính đối chiếu, không thay thế siêu âm và thước Prader.
+            {t[lang].consentWarning1}<br/>
+            {t[lang].consentWarning2}
           </p>
           <div className="flex gap-3 pt-2">
             <button 
               onClick={() => setConsentDeclined(true)}
               className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
             >
-              Huỷ
+              {t[lang].cancel}
             </button>
             <button 
               onClick={() => setHasConsented(true)}
               className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-indigo-500/30"
             >
-              Xác nhận
+              {t[lang].confirm}
+            </button>
+          </div>
+          <div className="pt-4 border-t border-slate-700 flex justify-center gap-4">
+            <button 
+              onClick={() => { setLang('vi'); localStorage.setItem('orchidometer_lang', 'vi'); }}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${lang === 'vi' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Tiếng Việt
+            </button>
+            <button 
+              onClick={() => { setLang('en'); localStorage.setItem('orchidometer_lang', 'en'); }}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${lang === 'en' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              English
             </button>
           </div>
         </div>
@@ -203,15 +316,23 @@ export default function App() {
 
   if (!isCalibrated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans text-slate-900">
+      <div 
+        style={{ 
+          paddingTop: 'var(--sat)', 
+          paddingBottom: 'var(--sab)',
+          paddingLeft: 'var(--sal)',
+          paddingRight: 'var(--sar)'
+        }}
+        className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans text-slate-900"
+      >
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-indigo-600 flex items-center justify-center gap-2">
               <Ruler className="w-6 h-6" />
-              Hiệu chuẩn màn hình
+              {t[lang].calibTitle}
             </h1>
             <p className="text-slate-500 text-sm">
-              Chọn vật thể tham chiếu để đồng bộ kích thước thực tế (mm) với màn hình của bạn.
+              {t[lang].calibDesc}
             </p>
           </div>
 
@@ -221,30 +342,30 @@ export default function App() {
               onClick={() => { setCalibMethod('ruler'); setCalibrationWidth(250); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${calibMethod === 'ruler' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Thước kẻ
+              {t[lang].ruler}
             </button>
             <button 
               onClick={() => { setCalibMethod('card'); setCalibrationWidth(150); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${calibMethod === 'card' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Thẻ ATM
+              {t[lang].card}
             </button>
             <button 
               onClick={() => { setCalibMethod('screen'); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${calibMethod === 'screen' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Nhập Inch
+              {t[lang].screen}
             </button>
           </div>
 
           <div className="space-y-2 w-full pt-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Chế độ hiển thị</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t[lang].displayMode}</label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: 'vertical', label: 'Dọc' },
-                { id: 'horizontal', label: 'Ngang' },
-                { id: 'both', label: 'Cả 2' },
-                { id: 'triple', label: '3 Kích thước' }
+                { id: 'vertical', label: t[lang].vertical },
+                { id: 'horizontal', label: t[lang].horizontal },
+                { id: 'both', label: t[lang].both },
+                { id: 'triple', label: t[lang].triple }
               ].map(mode => (
                 <button
                   key={mode.id}
@@ -261,7 +382,7 @@ export default function App() {
             {calibMethod === 'screen' ? (
               <div className="w-full space-y-4 bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
                 <div className="text-center text-sm text-indigo-800 mb-2">
-                  Chọn dòng máy của bạn hoặc nhập kích thước đường chéo màn hình.
+                  {t[lang].screenPrompt}
                 </div>
                 
                 <select 
@@ -301,7 +422,7 @@ export default function App() {
                 className="border-4 border-indigo-500 border-dashed rounded-xl bg-indigo-50/50 flex items-center justify-center transition-all duration-75"
               >
                 <span className="text-indigo-400 font-medium text-xs text-center px-4">
-                  Khớp viền thẻ vào đây
+                  {t[lang].cardPrompt}
                 </span>
               </div>
             ) : (
@@ -320,7 +441,7 @@ export default function App() {
                   </div>
                 ))}
                 <div className="absolute -top-8 left-0 right-0 text-center text-xs font-medium text-indigo-500">
-                  Áp thước kẻ vật lý vào đoạn 5cm này
+                  {t[lang].rulerPrompt}
                 </div>
               </div>
             )}
@@ -339,7 +460,7 @@ export default function App() {
                 <button onClick={() => setCalibrationWidth(w => Math.min(800, w + 1))} className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 font-bold text-xl transition-colors">+</button>
               </div>
               <div className="text-center text-[10px] text-slate-400 font-medium">
-                Kéo thanh trượt hoặc dùng nút +/- để tinh chỉnh
+                {t[lang].sliderHint}
               </div>
             </div>
           </div>
@@ -349,11 +470,16 @@ export default function App() {
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
           >
             <Check className="w-5 h-5" />
-            Xác nhận hiệu chuẩn
+            {t[lang].confirmCalib}
           </button>
         </div>
-        <div className="mt-8 text-xs text-slate-400 font-semibold text-center">
-          Sáng chế độc quyền của BS. Đỗ Tiến Sơn
+        <div className="mt-8 text-xs text-slate-400 font-semibold text-center flex flex-col gap-1">
+          <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors">
+            {t[lang].author}
+          </a>
+          <a href="http://dotienson.com/app" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors">
+            {t[lang].worldFirst}
+          </a>
         </div>
       </div>
     );
@@ -365,9 +491,18 @@ export default function App() {
   const stageStyle = getStageStyle(currentVolume);
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans text-white overflow-hidden transition-colors duration-500 ${focusedId ? 'bg-black' : 'bg-slate-900'}`}>
+    <div 
+      style={{ 
+        paddingLeft: 'var(--sal)',
+        paddingRight: 'var(--sar)'
+      }}
+      className={`min-h-screen flex flex-col font-sans text-white overflow-hidden transition-colors duration-500 ${focusedId ? 'bg-black' : 'bg-slate-900'}`}
+    >
       {/* Header */}
-      <header className={`p-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <header 
+        style={{ paddingTop: 'calc(var(--sat) + 1.5rem)' }}
+        className={`px-6 pb-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 text-2xl">
             🍒
@@ -375,6 +510,7 @@ export default function App() {
           <div>
             <h1 className="text-3xl text-indigo-300 leading-none mb-1" style={{ fontFamily: "'Caveat', cursive" }}>Sondo's Digital</h1>
             <p className="text-xl text-white uppercase tracking-widest font-black">Orchidometer</p>
+            <p className="text-xs text-slate-400 mt-1 font-medium">{t[lang].subtitle}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -460,23 +596,16 @@ export default function App() {
                 <div className="text-sm text-slate-400 font-mono mt-2 font-medium">
                   {widthMm} x {lengthMm} mm
                 </div>
-                <p className="text-slate-400 text-sm mt-3 font-medium">
-                  {getStageName(currentVolume)}
-                </p>
-              </div>
-            )}
-            {displayMode === 'triple' && (
-              <div className={`text-center mt-4 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                <p className="text-slate-400 text-sm font-medium">
-                  {getStageName(currentVolume)}
-                </p>
               </div>
             )}
           </motion.div>
         </AnimatePresence>
 
         {/* Navigation Controls */}
-        <div className={`absolute bottom-12 left-0 right-0 px-8 flex justify-between items-center max-w-md mx-auto transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div 
+          style={{ bottom: 'calc(var(--sab) + 3rem)' }}
+          className={`absolute left-0 right-0 px-8 flex justify-between items-center max-w-md mx-auto transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        >
           <button 
             onClick={prevVolume}
             className="w-14 h-14 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-all active:scale-95 border border-slate-700"
@@ -513,38 +642,57 @@ export default function App() {
             onClick={() => setShowInfo(false)}
           >
             <div className="bg-slate-800 p-8 rounded-3xl max-w-sm border border-slate-700 space-y-4" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xl font-bold text-indigo-400">Hướng dẫn sử dụng</h3>
+              <h3 className="text-xl font-bold text-indigo-400">{t[lang].guideTitle}</h3>
               <ul className="space-y-3 text-sm text-slate-300">
                 <li className="flex gap-3">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</div>
-                  <span>Đặt điện thoại song song với đối tượng cần so sánh.</span>
+                  <span>{t[lang].guide1}</span>
                 </li>
                 <li className="flex gap-3">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</div>
-                  <span>Sử dụng các nút mũi tên để thay đổi thể tích (ml).</span>
+                  <span>{t[lang].guide2}</span>
                 </li>
                 <li className="flex gap-3">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</div>
-                  <span>Kích thước elip trên màn hình đã được hiệu chuẩn theo mm thực tế.</span>
+                  <span>{t[lang].guide3}</span>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">4</div>
+                  <span>{t[lang].guide4}</span>
+                </li>
+                <li className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">5</div>
+                  <span>{t[lang].guide5}</span>
                 </li>
               </ul>
+              <div className="p-3 bg-slate-900/50 rounded-xl text-xs text-slate-400 italic">
+                {t[lang].guideNote}
+              </div>
               <button 
                 onClick={() => setShowInfo(false)}
                 className="w-full bg-indigo-600 py-3 rounded-xl font-bold mt-4"
               >
-                Đã hiểu
+                {t[lang].understood}
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <footer className={`p-4 text-center space-y-2 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <div className="text-[10px] text-slate-600 font-medium uppercase tracking-widest">
-          Standardized Calibration Active • {Math.round(ppm * 10) / 10} px/mm
+      <footer 
+        style={{ paddingBottom: 'calc(var(--sab) + 1rem)' }}
+        className={`p-4 text-center space-y-2 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      >
+        <div className="inline-block px-3 py-1 rounded-md bg-yellow-400/20 text-yellow-500 border border-yellow-500/30 text-[10px] font-mono uppercase tracking-widest">
+          {t[lang].calibFactor}: {Math.round(ppm * 10) / 10} px/mm
         </div>
-        <div className="text-xs text-indigo-400/80 font-semibold">
-          Sáng chế độc quyền của BS. Đỗ Tiến Sơn
+        <div className="text-xs text-indigo-400/80 font-semibold flex flex-col gap-1">
+          <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-300 transition-colors">
+            {t[lang].author}
+          </a>
+          <a href="http://dotienson.com/app" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-300 transition-colors">
+            {t[lang].worldFirst}
+          </a>
         </div>
       </footer>
     </div>
