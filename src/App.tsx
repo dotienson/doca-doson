@@ -56,7 +56,7 @@ const t = {
     stage1: "Giai đoạn Tiền dậy thì",
     stage2: "Giai đoạn Dậy thì",
     stage3: "Giai đoạn Trưởng thành",
-    subtitle: "BS. Đỗ Tiến Sơn TAHN",
+    subtitle: "BS. Đỗ Tiến Sơn (TAHN, ESPE)",
     guideTitle: "Hướng dẫn sử dụng",
     guide1: "Thông báo trẻ và gia đình quy trình đối chiếu theo quy trình",
     guide2: "Hiệu chuẩn màn hình với lựa chọn phù hợp, giải thích sơ bộ cho gia đình về các kích cỡ đối chiếu.",
@@ -65,7 +65,10 @@ const t = {
     guide5: "Thông báo kết quả khám sàng lọc. Có thể đối chiếu với thước Prader và Siêu âm khi có chỉ định.",
     guideNote: "Lưu ý: Kích thước elip trên màn hình đã được hiệu chuẩn theo mm thực tế. Luôn hiệu chuẩn trước mỗi lần sử dụng. Màn hình mặc định được cài đặt cho dòng iPhone 11 Pro Max.",
     understood: "Xác nhận",
-    calibFactor: "Hệ số Hiệu chuẩn Màn hình"
+    calibFactor: "Hệ số Hiệu chuẩn Màn hình",
+    promoTitle: "Nhập mã kích hoạt",
+    promoDesc: "Vui lòng nhập mã kích hoạt để tiếp tục sử dụng ứng dụng.",
+    promoPlaceholder: "Nhập mã số..."
   },
   en: {
     consentTitle: "Important Notice",
@@ -96,7 +99,7 @@ const t = {
     stage1: "Pre-pubertal Stage",
     stage2: "Pubertal Stage",
     stage3: "Adult Stage",
-    subtitle: "Dr. Do Tien Son, ESPE, TAHN",
+    subtitle: "Dr. Do Tien Son (TAHN, ESPE)",
     guideTitle: "Instructions for Use",
     guide1: "Inform the child and family of the comparison procedure.",
     guide2: "Calibrate the screen with the appropriate option, briefly explain the comparison sizes to the family.",
@@ -105,7 +108,10 @@ const t = {
     guide5: "Announce the screening results. Can be compared with a Prader orchidometer and Ultrasound when indicated.",
     guideNote: "Note: The ellipse size on the screen is calibrated to actual mm. Always calibrate before each use. The default screen is set for iPhone 11 Pro Max.",
     understood: "Confirm",
-    calibFactor: "Standardized Calibration Active"
+    calibFactor: "Standardized Calibration Active",
+    promoTitle: "Enter Activation Code",
+    promoDesc: "Please enter the activation code to continue using the application.",
+    promoPlaceholder: "Enter code..."
   }
 };
 
@@ -172,6 +178,8 @@ export default function App() {
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
   const [consentDeclined, setConsentDeclined] = useState(false);
+  const [isCodeEntered, setIsCodeEntered] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
   const [pixelsPerMm, setPixelsPerMm] = useState<number | null>(null);
   const [currentVolumeIdx, setCurrentVolumeIdx] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
@@ -195,12 +203,16 @@ export default function App() {
   useEffect(() => {
     const savedPpm = localStorage.getItem('orchidometer_ppm');
     const savedMode = localStorage.getItem('orchidometer_mode');
+    const savedPromo = localStorage.getItem('orchidometer_promo');
     if (savedPpm) {
       setPixelsPerMm(parseFloat(savedPpm));
       setIsCalibrated(true);
     }
     if (savedMode) {
       setDisplayMode(savedMode as any);
+    }
+    if (savedPromo === 'true') {
+      setIsCodeEntered(true);
     }
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
@@ -272,11 +284,11 @@ export default function App() {
         }}
         className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
       >
-        <div className="bg-slate-800 p-8 rounded-3xl max-w-md border border-slate-700 space-y-6 shadow-2xl">
-          <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
+        <div className="bg-slate-800 p-6 sm:p-8 rounded-3xl max-w-sm sm:max-w-md border border-slate-700 space-y-4 sm:space-y-6 shadow-2xl">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white">{t[lang].consentTitle}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">{t[lang].consentTitle}</h2>
           <p className="text-slate-300 text-sm leading-relaxed">
             {t[lang].consentWarning1}<br/>
             {t[lang].consentWarning2}
@@ -309,6 +321,43 @@ export default function App() {
               English
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasConsented && !isCodeEntered) {
+    return (
+      <div 
+        style={{ 
+          paddingTop: 'var(--sat)', 
+          paddingBottom: 'var(--sab)',
+          paddingLeft: 'var(--sal)',
+          paddingRight: 'var(--sar)'
+        }}
+        className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
+      >
+        <div className="bg-slate-800 p-6 sm:p-8 rounded-3xl max-w-sm sm:max-w-md w-full border border-slate-700 space-y-4 sm:space-y-6 shadow-2xl">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">{t[lang].promoTitle}</h2>
+          <p className="text-slate-300 text-sm leading-relaxed">
+            {t[lang].promoDesc}
+          </p>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder={t[lang].promoPlaceholder}
+            value={promoCode}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^0-9]/g, '');
+              setPromoCode(val);
+              if (val.endsWith('8') || val.endsWith('9')) {
+                setIsCodeEntered(true);
+                localStorage.setItem('orchidometer_promo', 'true');
+              }
+            }}
+            className="w-full bg-slate-900 border-2 border-slate-600 rounded-xl py-3 px-4 text-white font-bold text-center text-xl focus:outline-none focus:border-indigo-500 transition-colors"
+          />
         </div>
       </div>
     );
@@ -473,7 +522,7 @@ export default function App() {
             {t[lang].confirmCalib}
           </button>
         </div>
-        <div className="mt-8 text-xs text-slate-400 font-semibold text-center flex flex-col gap-1">
+        <div className="mt-8 text-[10px] sm:text-xs text-slate-400 font-semibold text-center flex flex-col gap-1">
           <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors">
             {t[lang].author}
           </a>
@@ -686,7 +735,7 @@ export default function App() {
         <div className="inline-block px-3 py-1 rounded-md bg-yellow-400/20 text-yellow-500 border border-yellow-500/30 text-[10px] font-mono uppercase tracking-widest">
           {t[lang].calibFactor}: {Math.round(ppm * 10) / 10} px/mm
         </div>
-        <div className="text-xs text-indigo-400/80 font-semibold flex flex-col gap-1">
+        <div className="text-[10px] sm:text-xs text-indigo-400/80 font-semibold flex flex-col gap-1">
           <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-300 transition-colors">
             {t[lang].author}
           </a>
