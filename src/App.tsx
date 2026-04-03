@@ -263,11 +263,11 @@ export default function App() {
         }}
         className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
       >
-        <div className="bg-slate-800 p-8 rounded-3xl max-w-md border border-slate-700 space-y-4 shadow-2xl">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
-          <h2 className="text-xl font-bold text-white">{t[lang].declinedTitle}</h2>
-          <p className="text-slate-400">{t[lang].declinedDesc}</p>
-          <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" className="mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors inline-block">{t[lang].exit}</a>
+        <div className="bg-slate-800 p-5 sm:p-6 rounded-2xl max-w-xs sm:max-w-sm border border-slate-700 space-y-3 sm:space-y-4 shadow-2xl mx-auto">
+          <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12 text-red-500 mx-auto" />
+          <h2 className="text-lg sm:text-xl font-bold text-white">{t[lang].declinedTitle}</h2>
+          <p className="text-slate-400 text-xs sm:text-sm">{t[lang].declinedDesc}</p>
+          <a href="https://tamanhhospital.vn/chuyen-gia/do-tien-son/" className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors inline-block">{t[lang].exit}</a>
         </div>
       </div>
     );
@@ -305,6 +305,14 @@ export default function App() {
               className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-indigo-500/30"
             >
               {t[lang].confirm}
+            </button>
+          </div>
+          <div className="pt-3 border-t border-slate-700 flex justify-center">
+            <button 
+              onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
+              className="px-3 py-1 rounded-full bg-slate-900 text-slate-400 text-[10px] sm:text-xs font-bold hover:text-white hover:bg-slate-700 transition-colors inline-block"
+            >
+              {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
             </button>
           </div>
         </div>
