@@ -52,7 +52,7 @@ const t = {
     sliderHint: "Kéo thanh trượt hoặc dùng nút +/- để tinh chỉnh",
     confirmCalib: "Xác nhận hiệu chuẩn",
     author: "Sáng chế độc quyền của BS. Đỗ Tiến Sơn",
-    worldFirst: "Orchidometer kĩ thuật số đầu tiên trên thế giới sử dụng phương pháp đối chiếu Chipkevitch",
+    worldFirst: "Orchidometer kĩ thuật số đầu tiên trên thế giới sử dụng phương pháp Chipkevitch",
     stage1: "Giai đoạn Tiền dậy thì",
     stage2: "Giai đoạn Dậy thì",
     stage3: "Giai đoạn Trưởng thành",
@@ -95,7 +95,7 @@ const t = {
     sliderHint: "Drag slider or use +/- to adjust",
     confirmCalib: "Confirm Calibration",
     author: "Exclusive invention by Dr. Do Tien Son",
-    worldFirst: "The world's first digital Orchidometer using the Chipkevitch comparison method",
+    worldFirst: "The world's first digital Orchidometer using the Chipkevitch method",
     stage1: "Pre-pubertal Stage",
     stage2: "Pubertal Stage",
     stage3: "Adult Stage",
@@ -284,41 +284,27 @@ export default function App() {
         }}
         className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
       >
-        <div className="bg-slate-800 p-6 sm:p-8 rounded-3xl max-w-sm sm:max-w-md border border-slate-700 space-y-4 sm:space-y-6 shadow-2xl">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
+        <div className="bg-slate-800 p-5 sm:p-6 rounded-2xl max-w-xs sm:max-w-sm border border-slate-700 space-y-3 sm:space-y-4 shadow-2xl mx-auto">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">{t[lang].consentTitle}</h2>
-          <p className="text-slate-300 text-sm leading-relaxed">
+          <h2 className="text-lg sm:text-xl font-bold text-white">{t[lang].consentTitle}</h2>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
             {t[lang].consentWarning1}<br/>
             {t[lang].consentWarning2}
           </p>
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-1">
             <button 
               onClick={() => setConsentDeclined(true)}
-              className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+              className="flex-1 py-2 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-colors"
             >
               {t[lang].cancel}
             </button>
             <button 
               onClick={() => setHasConsented(true)}
-              className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-indigo-500/30"
+              className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-indigo-500/30"
             >
               {t[lang].confirm}
-            </button>
-          </div>
-          <div className="pt-4 border-t border-slate-700 flex justify-center gap-4">
-            <button 
-              onClick={() => { setLang('vi'); localStorage.setItem('orchidometer_lang', 'vi'); }}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${lang === 'vi' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              Tiếng Việt
-            </button>
-            <button 
-              onClick={() => { setLang('en'); localStorage.setItem('orchidometer_lang', 'en'); }}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${lang === 'en' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              English
             </button>
           </div>
         </div>
@@ -529,6 +515,14 @@ export default function App() {
           <a href="http://dotienson.com/app" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors">
             {t[lang].worldFirst}
           </a>
+          <div className="mt-2">
+            <button 
+              onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
+              className="px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] sm:text-xs font-bold hover:text-indigo-600 hover:bg-slate-200 transition-colors inline-block"
+            >
+              {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -742,6 +736,14 @@ export default function App() {
           <a href="http://dotienson.com/app" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-300 transition-colors">
             {t[lang].worldFirst}
           </a>
+        </div>
+        <div className="mt-2">
+          <button 
+            onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
+            className="px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-[10px] sm:text-xs font-bold hover:text-white hover:bg-slate-700 transition-colors inline-block"
+          >
+            {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
+          </button>
         </div>
       </footer>
     </div>
