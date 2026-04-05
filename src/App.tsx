@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Ruler, Info, ChevronLeft, ChevronRight, Check, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Settings, Ruler, Info, ChevronLeft, ChevronRight, Check, RefreshCw, AlertTriangle, Crown } from 'lucide-react';
 
 // Standard Orchidometer dimensions (Length x Width in mm)
 // Volume (ml): [Length, Width]
@@ -69,7 +69,11 @@ const t = {
     calibFactor: "Hệ số Hiệu chuẩn Màn hình",
     promoTitle: "Nhập mã kích hoạt",
     promoDesc: "Vui lòng nhập mã kích hoạt để tiếp tục sử dụng ứng dụng.",
-    promoPlaceholder: "Nhập mã số..."
+    promoPlaceholder: "Nhập mã số...",
+    premiumTitle: "Tính năng Cao cấp",
+    premiumDesc: "Nhập mã mở khóa để sử dụng giao diện Chuỗi hạt.",
+    premiumPlaceholder: "Nhập mã...",
+    premiumError: "Mã không hợp lệ",
   },
   en: {
     consentTitle: "Important Notice",
@@ -113,7 +117,11 @@ const t = {
     calibFactor: "Standardized Calibration Active",
     promoTitle: "Enter Activation Code",
     promoDesc: "Please enter the activation code to continue using the application.",
-    promoPlaceholder: "Enter code..."
+    promoPlaceholder: "Enter code...",
+    premiumTitle: "Premium Feature",
+    premiumDesc: "Enter unlock code to use the Beads display mode.",
+    premiumPlaceholder: "Enter code...",
+    premiumError: "Invalid code",
   }
 };
 
@@ -192,6 +200,10 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
+  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [premiumInput, setPremiumInput] = useState('');
+  const [premiumError, setPremiumError] = useState(false);
 
   // Update theme color for status bar based on focus mode
   useEffect(() => {
@@ -219,6 +231,10 @@ export default function App() {
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
       setLang(savedLang as 'vi' | 'en');
+    }
+    const savedPremium = localStorage.getItem('orchidometer_premium');
+    if (savedPremium === 'true') {
+      setIsPremiumUnlocked(true);
     }
   }, []);
 
@@ -416,9 +432,18 @@ export default function App() {
               ].map(mode => (
                 <button
                   key={mode.id}
-                  onClick={() => setDisplayMode(mode.id as any)}
-                  className={`py-2 text-sm font-medium rounded-lg transition-all border ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => {
+                    if (mode.id === 'beads' && !isPremiumUnlocked) {
+                      setShowPremiumModal(true);
+                      return;
+                    }
+                    setDisplayMode(mode.id as any);
+                  }}
+                  className={`py-2 text-sm font-medium rounded-lg transition-all border relative ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                 >
+                  {mode.id === 'beads' && !isPremiumUnlocked && (
+                    <Crown className="w-3 h-3 absolute top-1 right-1 text-amber-500" />
+                  )}
                   {mode.label}
                 </button>
               ))}
@@ -536,6 +561,64 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* Premium Modal */}
+        <AnimatePresence>
+          {showPremiumModal && (
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6"
+              onClick={() => setShowPremiumModal(false)}
+            >
+              <div className="bg-white p-6 rounded-3xl max-w-sm w-full shadow-2xl space-y-4" onClick={e => e.stopPropagation()}>
+                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                  <Crown className="w-6 h-6 text-amber-500" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 text-center">{t[lang].premiumTitle}</h3>
+                <p className="text-sm text-slate-500 text-center">{t[lang].premiumDesc}</p>
+                <input
+                  autoFocus
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder={t[lang].premiumPlaceholder}
+                  value={premiumInput}
+                  onChange={(e) => {
+                    setPremiumInput(e.target.value);
+                    setPremiumError(false);
+                  }}
+                  className={`w-full bg-slate-50 border-2 rounded-xl py-3 px-4 text-slate-800 font-bold text-center text-xl focus:outline-none transition-colors ${premiumError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-amber-500'}`}
+                />
+                {premiumError && <p className="text-xs text-red-500 text-center">{t[lang].premiumError}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    onClick={() => setShowPremiumModal(false)}
+                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors"
+                  >
+                    {t[lang].cancel}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (premiumInput === '5555') {
+                        setIsPremiumUnlocked(true);
+                        localStorage.setItem('orchidometer_premium', 'true');
+                        setShowPremiumModal(false);
+                        setDisplayMode('beads');
+                      } else {
+                        setPremiumError(true);
+                      }
+                    }}
+                    className="flex-1 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition-colors shadow-lg shadow-amber-500/30"
+                  >
+                    {t[lang].confirm}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
