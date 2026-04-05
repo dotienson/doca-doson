@@ -176,6 +176,12 @@ const CARD_WIDTH_MM = 53.98;
 const CARD_HEIGHT_MM = 85.60;
 const RULER_LENGTH_MM = 50; // 5cm
 
+const triggerHaptic = (pattern: number | number[] = 50) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(pattern);
+  }
+};
+
 export default function App() {
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
@@ -254,10 +260,12 @@ export default function App() {
 
   const nextVolume = () => {
     setCurrentVolumeIdx((prev) => (prev + 1) % VOLUMES.length);
+    triggerHaptic(50);
   };
 
   const prevVolume = () => {
     setCurrentVolumeIdx((prev) => (prev - 1 + VOLUMES.length) % VOLUMES.length);
+    triggerHaptic(50);
   };
 
   if (consentDeclined) {
@@ -341,9 +349,6 @@ export default function App() {
       >
         <div className="bg-slate-800 p-5 sm:p-6 rounded-2xl max-w-xs sm:max-w-sm w-full border border-slate-700 space-y-3 sm:space-y-4 shadow-2xl mx-auto">
           <h2 className="text-lg sm:text-xl font-bold text-white">{t[lang].promoTitle}</h2>
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            {t[lang].promoDesc}
-          </p>
           <input
             autoFocus
             type="text"
@@ -432,7 +437,7 @@ export default function App() {
                   className={`py-2 text-sm font-medium rounded-lg transition-all border flex items-center justify-center gap-1 ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                 >
                   {mode.label}
-                  {mode.isPremium && !isPremiumUnlocked && <Crown className="w-4 h-4 text-yellow-500" />}
+                  {mode.isPremium && <Crown className="w-4 h-4 text-yellow-500" />}
                 </button>
               ))}
 
@@ -466,6 +471,7 @@ export default function App() {
                           setShowPremiumPrompt(false);
                           setShowSuccess(true);
                           setDisplayMode('beads');
+                          triggerHaptic([100, 50, 100]);
                           setTimeout(() => setShowSuccess(false), 3000);
                         }
                       }}
@@ -657,9 +663,15 @@ export default function App() {
                   onDragEnd={(e, { offset, velocity }) => {
                     const swipe = offset.x;
                     if (swipe < -30) {
-                      setCurrentVolumeIdx(prev => Math.min(VOLUMES.length - 1, prev + 1));
+                      setCurrentVolumeIdx(prev => {
+                        if (prev < VOLUMES.length - 1) triggerHaptic(50);
+                        return Math.min(VOLUMES.length - 1, prev + 1);
+                      });
                     } else if (swipe > 30) {
-                      setCurrentVolumeIdx(prev => Math.max(0, prev - 1));
+                      setCurrentVolumeIdx(prev => {
+                        if (prev > 0) triggerHaptic(50);
+                        return Math.max(0, prev - 1);
+                      });
                     }
                   }}
                   animate={{ x: 0 }}
@@ -686,27 +698,49 @@ export default function App() {
                 </motion.div>
               </div>
             ) : displayMode === 'triple' ? (
-              <div className="flex flex-row items-center justify-center gap-6 w-full overflow-x-auto pt-4 pb-8 px-4">
-                {[currentVolumeIdx - 1, currentVolumeIdx, currentVolumeIdx + 1].map(idx => {
-                  if (idx < 0 || idx >= VOLUMES.length) return <div key={idx} className="w-20 shrink-0" />;
-                  const vol = VOLUMES[idx];
-                  const [l, w] = ORCHIDOMETER_DATA[vol];
-                  const style = getStageStyle(vol);
-                  const isCenter = idx === currentVolumeIdx;
-                  return (
-                    <div key={vol} className="flex flex-col items-center transition-all shrink-0">
-                      <Ellipsoid 
-                        id={`triple-${vol}`}
-                        widthMm={w} lengthMm={l} ppm={ppm} isHorizontal={false} styleObj={style} 
-                        isFocused={focusedId === `triple-${vol}`}
-                        isHidden={focusedId !== null && focusedId !== `triple-${vol}`}
-                        onClick={setFocusedId}
-                      />
-                      <div className={`mt-8 font-bold ${style.text} ${isCenter ? 'text-3xl' : 'text-xl'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{vol}mL</div>
-                      <div className={`font-mono text-slate-400 mt-1 ${isCenter ? 'text-sm' : 'text-[10px]'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{w} x {l} mm</div>
-                    </div>
-                  );
-                })}
+              <div className="w-full relative py-4 overflow-hidden touch-none">
+                <motion.div 
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = offset.x;
+                    if (swipe < -30) {
+                      setCurrentVolumeIdx(prev => {
+                        if (prev < VOLUMES.length - 1) triggerHaptic(50);
+                        return Math.min(VOLUMES.length - 1, prev + 1);
+                      });
+                    } else if (swipe > 30) {
+                      setCurrentVolumeIdx(prev => {
+                        if (prev > 0) triggerHaptic(50);
+                        return Math.max(0, prev - 1);
+                      });
+                    }
+                  }}
+                  animate={{ x: 0 }}
+                  className="flex flex-row items-center justify-center gap-6 w-full px-4"
+                >
+                  {[currentVolumeIdx - 1, currentVolumeIdx, currentVolumeIdx + 1].map(idx => {
+                    if (idx < 0 || idx >= VOLUMES.length) return <div key={`empty-${idx}`} className="w-20 shrink-0" />;
+                    const vol = VOLUMES[idx];
+                    const [l, w] = ORCHIDOMETER_DATA[vol];
+                    const style = getStageStyle(vol);
+                    const isCenter = idx === currentVolumeIdx;
+                    return (
+                      <div key={vol} className="flex flex-col items-center transition-all shrink-0">
+                        <Ellipsoid 
+                          id={`triple-${vol}`}
+                          widthMm={w} lengthMm={l} ppm={ppm} isHorizontal={false} styleObj={style} 
+                          isFocused={focusedId === `triple-${vol}`}
+                          isHidden={focusedId !== null && focusedId !== `triple-${vol}`}
+                          onClick={setFocusedId}
+                        />
+                        <div className={`mt-8 font-bold ${style.text} ${isCenter ? 'text-3xl' : 'text-xl'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{vol}mL</div>
+                        <div className={`font-mono text-slate-400 mt-1 ${isCenter ? 'text-sm' : 'text-[10px]'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{w} x {l} mm</div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
               </div>
             ) : (
               <div className={`flex ${displayMode === 'both' ? 'flex-row gap-16' : 'flex-col'} items-center justify-center`}>
