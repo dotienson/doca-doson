@@ -72,7 +72,8 @@ const t = {
     premiumError: "Liên hệ BS. Sơn để nhận code miễn phí",
     appName: "THƯỚC PRADER ẢO",
     appAuthor: "Bác sĩ Sơn thiết kế",
-    premiumPromptTitle: "Tính năng Cao cấp"
+    premiumPromptTitle: "Tính năng VIP",
+    premiumSuccess: "Xác nhận VIP!"
   },
   en: {
     consentTitle: "Important Notice",
@@ -119,7 +120,8 @@ const t = {
     premiumError: "Contact Dr.Son for free premium code",
     appName: "ORCHIDOMETER",
     appAuthor: "Sondo's Digital",
-    premiumPromptTitle: "Premium Mode for VIP"
+    premiumPromptTitle: "Premium Mode for VIP",
+    premiumSuccess: "VIP Confirmed!"
   }
 };
 
@@ -479,7 +481,7 @@ export default function App() {
                           setDisplayMode('beads');
                           setPremiumError(false);
                           triggerHaptic([100, 50, 100]);
-                          setTimeout(() => setShowSuccess(false), 3000);
+                          setTimeout(() => setShowSuccess(false), 3500);
                         } else if (val.length >= 4) {
                           setPremiumError(true);
                           triggerHaptic(50);
@@ -638,17 +640,17 @@ export default function App() {
         style={{ paddingTop: 'calc(var(--sat) + 1.5rem)' }}
         className={`px-6 pb-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div>
-            <h1 className="text-xl text-indigo-300 leading-none mb-1 flex items-center gap-2 font-light italic" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+            <h1 className="text-base sm:text-xl text-indigo-300 leading-none mb-1 flex items-center gap-1.5 sm:gap-2 font-light italic" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
               {t[lang].appAuthor}
-              {isPremiumUnlocked && <Crown className="w-6 h-6 text-yellow-400" />}
+              {isPremiumUnlocked && <Crown className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400" />}
             </h1>
-            <div className="flex items-center gap-2">
-              <p className="text-xl text-white uppercase tracking-widest font-black">{t[lang].appName}</p>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <p className="text-[16px] sm:text-xl text-white uppercase tracking-wider sm:tracking-widest font-black whitespace-nowrap">{t[lang].appName}</p>
               {isPremiumUnlocked && (
-                <span className="bg-yellow-400 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider">
-                  {lang === 'vi' ? 'Cao cấp' : 'Premium'}
+                <span className="bg-yellow-400 text-red-600 text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                  {lang === 'vi' ? 'VIP' : 'Premium'}
                 </span>
               )}
             </div>
@@ -845,10 +847,10 @@ export default function App() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-50 flex items-center gap-2"
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-50 flex items-center gap-2 whitespace-nowrap"
           >
             <Check className="w-5 h-5" />
-            Chúc mừng đã kích hoạt tính năng cao cấp!
+            {t[lang].premiumSuccess}
           </motion.div>
         )}
       </AnimatePresence>
