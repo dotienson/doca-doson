@@ -46,6 +46,7 @@ const t = {
     horizontal: "Ngang",
     both: "Cả 2",
     triple: "3 Kích thước",
+    beads: "Chuỗi hạt",
     screenPrompt: "Chọn dòng máy của bạn hoặc nhập kích thước đường chéo màn hình.",
     cardPrompt: "Khớp viền thẻ vào đây",
     rulerPrompt: "Áp thước kẻ vật lý vào đoạn 5cm này",
@@ -89,6 +90,7 @@ const t = {
     horizontal: "Horizontal",
     both: "Both",
     triple: "3 Sizes",
+    beads: "Beads",
     screenPrompt: "Select your device model or enter screen diagonal size.",
     cardPrompt: "Fit card edges here",
     rulerPrompt: "Align physical ruler to this 5cm segment",
@@ -185,7 +187,7 @@ export default function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [calibrationWidth, setCalibrationWidth] = useState(250); // Initial pixel width for calibration box
   const [calibMethod, setCalibMethod] = useState<'ruler' | 'card' | 'screen'>('screen');
-  const [displayMode, setDisplayMode] = useState<'vertical' | 'horizontal' | 'both' | 'triple'>('vertical');
+  const [displayMode, setDisplayMode] = useState<'vertical' | 'horizontal' | 'both' | 'triple' | 'beads'>('vertical');
   const [screenInches, setScreenInches] = useState<number>(6.5); // Default to iPhone 11 Pro Max (6.5 inch)
   const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
   const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -409,7 +411,8 @@ export default function App() {
                 { id: 'vertical', label: t[lang].vertical },
                 { id: 'horizontal', label: t[lang].horizontal },
                 { id: 'both', label: t[lang].both },
-                { id: 'triple', label: t[lang].triple }
+                { id: 'triple', label: t[lang].triple },
+                { id: 'beads', label: t[lang].beads }
               ].map(mode => (
                 <button
                   key={mode.id}
@@ -592,7 +595,45 @@ export default function App() {
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="flex flex-col items-center space-y-12"
           >
-            {displayMode === 'triple' ? (
+            {displayMode === 'beads' ? (
+              <div className="w-full relative py-12 overflow-hidden touch-none">
+                <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-red-900/50 -translate-y-1/2 z-0" />
+                <motion.div 
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = offset.x;
+                    if (swipe < -30) {
+                      setCurrentVolumeIdx(prev => Math.min(VOLUMES.length - 1, prev + 1));
+                    } else if (swipe > 30) {
+                      setCurrentVolumeIdx(prev => Math.max(0, prev - 1));
+                    }
+                  }}
+                  animate={{ x: 0 }}
+                  className="flex items-center gap-12 justify-center relative z-10"
+                >
+                  {[currentVolumeIdx - 1, currentVolumeIdx, currentVolumeIdx + 1].map((idx) => {
+                    if (idx < 0 || idx >= VOLUMES.length) return <div key={`empty-${idx}`} className="w-24 shrink-0" />;
+                    const vol = VOLUMES[idx];
+                    const [l, w] = ORCHIDOMETER_DATA[vol];
+                    const style = getStageStyle(vol);
+                    return (
+                      <div key={vol} className="flex flex-col items-center shrink-0 transition-all duration-300">
+                        <Ellipsoid 
+                          id={`beads-${vol}`}
+                          widthMm={w} lengthMm={l} ppm={ppm} isHorizontal={true} styleObj={style} 
+                          isFocused={focusedId === `beads-${vol}`}
+                          isHidden={focusedId !== null && focusedId !== `beads-${vol}`}
+                          onClick={setFocusedId}
+                        />
+                        <div className={`absolute -bottom-12 font-bold ${style.text} text-xl transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{vol}mL</div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              </div>
+            ) : displayMode === 'triple' ? (
               <div className="flex flex-row items-center justify-center gap-6 w-full overflow-x-auto pt-4 pb-8 px-4">
                 {[currentVolumeIdx - 1, currentVolumeIdx, currentVolumeIdx + 1].map(idx => {
                   if (idx < 0 || idx >= VOLUMES.length) return <div key={idx} className="w-20 shrink-0" />;
@@ -639,7 +680,7 @@ export default function App() {
             )}
 
             {/* Volume Label */}
-            {displayMode !== 'triple' && (
+            {displayMode !== 'triple' && displayMode !== 'beads' && (
               <div className={`text-center transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <div className={`text-7xl font-black ${stageStyle.text} flex items-baseline justify-center gap-2`}>
                   <span>{currentVolume}</span>
