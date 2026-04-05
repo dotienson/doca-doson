@@ -193,6 +193,12 @@ export default function App() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
 
+  // Premium Feature States
+  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
+  const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
+  const [premiumCode, setPremiumCode] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+
   // Update theme color for status bar based on focus mode
   useEffect(() => {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -205,7 +211,7 @@ export default function App() {
   useEffect(() => {
     const savedPpm = localStorage.getItem('orchidometer_ppm');
     const savedMode = localStorage.getItem('orchidometer_mode');
-    const savedPromo = localStorage.getItem('orchidometer_promo');
+    const savedPremium = localStorage.getItem('orchidometer_premium');
     if (savedPpm) {
       setPixelsPerMm(parseFloat(savedPpm));
       setIsCalibrated(true);
@@ -213,8 +219,8 @@ export default function App() {
     if (savedMode) {
       setDisplayMode(savedMode as any);
     }
-    if (savedPromo === 'true') {
-      setIsCodeEntered(true);
+    if (savedPremium === 'true') {
+      setIsPremiumUnlocked(true);
     }
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
@@ -348,9 +354,8 @@ export default function App() {
             onChange={(e) => {
               const val = e.target.value.replace(/[^0-9]/g, '');
               setPromoCode(val);
-              if (val.endsWith('8') || val.endsWith('9')) {
+              if (val.endsWith('6') || val.endsWith('8')) {
                 setIsCodeEntered(true);
-                localStorage.setItem('orchidometer_promo', 'true');
               }
             }}
             className="w-full bg-slate-900 border-2 border-slate-600 rounded-xl py-2 px-3 text-white font-bold text-center text-lg focus:outline-none focus:border-indigo-500 transition-colors"
@@ -406,22 +411,69 @@ export default function App() {
 
           <div className="space-y-2 w-full pt-2">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t[lang].displayMode}</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 relative">
               {[
                 { id: 'vertical', label: t[lang].vertical },
                 { id: 'horizontal', label: t[lang].horizontal },
                 { id: 'both', label: t[lang].both },
                 { id: 'triple', label: t[lang].triple },
-                { id: 'beads', label: t[lang].beads }
+                { id: 'beads', label: t[lang].beads, isPremium: true }
               ].map(mode => (
                 <button
                   key={mode.id}
-                  onClick={() => setDisplayMode(mode.id as any)}
-                  className={`py-2 text-sm font-medium rounded-lg transition-all border ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => {
+                    if (mode.isPremium && !isPremiumUnlocked) {
+                      setShowPremiumPrompt(true);
+                    } else {
+                      setDisplayMode(mode.id as any);
+                      setShowPremiumPrompt(false);
+                    }
+                  }}
+                  className={`py-2 text-sm font-medium rounded-lg transition-all border flex items-center justify-center gap-1 ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                 >
                   {mode.label}
+                  {mode.isPremium && !isPremiumUnlocked && <Crown className="w-4 h-4 text-yellow-500" />}
                 </button>
               ))}
+
+              <AnimatePresence>
+                {showPremiumPrompt && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    className="absolute top-full left-0 right-0 mt-2 p-4 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl z-20"
+                  >
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                        <Crown className="w-4 h-4 text-yellow-500" />
+                        Tính năng Cao cấp
+                      </h4>
+                      <button onClick={() => setShowPremiumPrompt(false)} className="text-slate-400 hover:text-white transition-colors">✕</button>
+                    </div>
+                    <input
+                      autoFocus
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Nhập mã (VD: 6868)"
+                      value={premiumCode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setPremiumCode(val);
+                        if (val === '6868') {
+                          setIsPremiumUnlocked(true);
+                          localStorage.setItem('orchidometer_premium', 'true');
+                          setShowPremiumPrompt(false);
+                          setShowSuccess(true);
+                          setDisplayMode('beads');
+                          setTimeout(() => setShowSuccess(false), 3000);
+                        }
+                      }}
+                      className="w-full bg-slate-900 border-2 border-slate-600 rounded-lg py-2 px-3 text-white text-center font-bold focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -560,7 +612,7 @@ export default function App() {
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 text-2xl">
-            <Crown className="w-6 h-6 text-white" />
+            🍒
           </div>
           <div>
             <h1 className="text-3xl text-indigo-300 leading-none mb-1" style={{ fontFamily: "'Caveat', cursive" }}>Sondo's Digital</h1>
@@ -725,6 +777,20 @@ export default function App() {
       </main>
 
       {/* Info Overlay */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-50 flex items-center gap-2"
+          >
+            <Check className="w-5 h-5" />
+            Chúc mừng đã kích hoạt tính năng cao cấp!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showInfo && (
           <motion.div 
