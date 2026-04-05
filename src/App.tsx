@@ -69,11 +69,7 @@ const t = {
     calibFactor: "Hệ số Hiệu chuẩn Màn hình",
     promoTitle: "Nhập mã kích hoạt",
     promoDesc: "Vui lòng nhập mã kích hoạt để tiếp tục sử dụng ứng dụng.",
-    promoPlaceholder: "Nhập mã số...",
-    premiumTitle: "Tính năng Cao cấp",
-    premiumDesc: "Nhập mã mở khóa để sử dụng giao diện Chuỗi hạt.",
-    premiumPlaceholder: "Nhập mã...",
-    premiumError: "Mã không hợp lệ",
+    promoPlaceholder: "Nhập mã số..."
   },
   en: {
     consentTitle: "Important Notice",
@@ -117,11 +113,7 @@ const t = {
     calibFactor: "Standardized Calibration Active",
     promoTitle: "Enter Activation Code",
     promoDesc: "Please enter the activation code to continue using the application.",
-    promoPlaceholder: "Enter code...",
-    premiumTitle: "Premium Feature",
-    premiumDesc: "Enter unlock code to use the Beads display mode.",
-    premiumPlaceholder: "Enter code...",
-    premiumError: "Invalid code",
+    promoPlaceholder: "Enter code..."
   }
 };
 
@@ -200,10 +192,6 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
-  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [premiumInput, setPremiumInput] = useState('');
-  const [premiumError, setPremiumError] = useState(false);
 
   // Update theme color for status bar based on focus mode
   useEffect(() => {
@@ -231,10 +219,6 @@ export default function App() {
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
       setLang(savedLang as 'vi' | 'en');
-    }
-    const savedPremium = localStorage.getItem('orchidometer_premium');
-    if (savedPremium === 'true') {
-      setIsPremiumUnlocked(true);
     }
   }, []);
 
@@ -330,7 +314,7 @@ export default function App() {
               onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
               className="px-3 py-1 rounded-full bg-slate-900 text-slate-400 text-[10px] sm:text-xs font-bold hover:text-white hover:bg-slate-700 transition-colors inline-block"
             >
-              {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
+              {lang === 'vi' ? 'Tiếng Việt' : 'English'} ⇄
             </button>
           </div>
         </div>
@@ -349,9 +333,9 @@ export default function App() {
         }}
         className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center font-sans"
       >
-        <div className="bg-slate-800 p-6 sm:p-8 rounded-3xl max-w-sm sm:max-w-md w-full border border-slate-700 space-y-4 sm:space-y-6 shadow-2xl">
-          <h2 className="text-xl sm:text-2xl font-bold text-white">{t[lang].promoTitle}</h2>
-          <p className="text-slate-300 text-sm leading-relaxed">
+        <div className="bg-slate-800 p-5 sm:p-6 rounded-2xl max-w-xs sm:max-w-sm w-full border border-slate-700 space-y-3 sm:space-y-4 shadow-2xl mx-auto">
+          <h2 className="text-lg sm:text-xl font-bold text-white">{t[lang].promoTitle}</h2>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
             {t[lang].promoDesc}
           </p>
           <input
@@ -369,7 +353,7 @@ export default function App() {
                 localStorage.setItem('orchidometer_promo', 'true');
               }
             }}
-            className="w-full bg-slate-900 border-2 border-slate-600 rounded-xl py-3 px-4 text-white font-bold text-center text-xl focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full bg-slate-900 border-2 border-slate-600 rounded-xl py-2 px-3 text-white font-bold text-center text-lg focus:outline-none focus:border-indigo-500 transition-colors"
           />
         </div>
       </div>
@@ -432,18 +416,9 @@ export default function App() {
               ].map(mode => (
                 <button
                   key={mode.id}
-                  onClick={() => {
-                    if (mode.id === 'beads' && !isPremiumUnlocked) {
-                      setShowPremiumModal(true);
-                      return;
-                    }
-                    setDisplayMode(mode.id as any);
-                  }}
-                  className={`py-2 text-sm font-medium rounded-lg transition-all border relative ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => setDisplayMode(mode.id as any)}
+                  className={`py-2 text-sm font-medium rounded-lg transition-all border ${displayMode === mode.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                 >
-                  {mode.id === 'beads' && !isPremiumUnlocked && (
-                    <Crown className="w-3 h-3 absolute top-1 right-1 text-amber-500" />
-                  )}
                   {mode.label}
                 </button>
               ))}
@@ -557,68 +532,10 @@ export default function App() {
               onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
               className="px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] sm:text-xs font-bold hover:text-indigo-600 hover:bg-slate-200 transition-colors inline-block"
             >
-              {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
+              {lang === 'vi' ? 'Tiếng Việt' : 'English'} ⇄
             </button>
           </div>
         </div>
-
-        {/* Premium Modal */}
-        <AnimatePresence>
-          {showPremiumModal && (
-            <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6"
-              onClick={() => setShowPremiumModal(false)}
-            >
-              <div className="bg-white p-6 rounded-3xl max-w-sm w-full shadow-2xl space-y-4" onClick={e => e.stopPropagation()}>
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-                  <Crown className="w-6 h-6 text-amber-500" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 text-center">{t[lang].premiumTitle}</h3>
-                <p className="text-sm text-slate-500 text-center">{t[lang].premiumDesc}</p>
-                <input
-                  autoFocus
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={t[lang].premiumPlaceholder}
-                  value={premiumInput}
-                  onChange={(e) => {
-                    setPremiumInput(e.target.value);
-                    setPremiumError(false);
-                  }}
-                  className={`w-full bg-slate-50 border-2 rounded-xl py-3 px-4 text-slate-800 font-bold text-center text-xl focus:outline-none transition-colors ${premiumError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-amber-500'}`}
-                />
-                {premiumError && <p className="text-xs text-red-500 text-center">{t[lang].premiumError}</p>}
-                <div className="flex gap-2 pt-2">
-                  <button 
-                    onClick={() => setShowPremiumModal(false)}
-                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors"
-                  >
-                    {t[lang].cancel}
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if (premiumInput === '5555') {
-                        setIsPremiumUnlocked(true);
-                        localStorage.setItem('orchidometer_premium', 'true');
-                        setShowPremiumModal(false);
-                        setDisplayMode('beads');
-                      } else {
-                        setPremiumError(true);
-                      }
-                    }}
-                    className="flex-1 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition-colors shadow-lg shadow-amber-500/30"
-                  >
-                    {t[lang].confirm}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     );
   }
@@ -643,7 +560,7 @@ export default function App() {
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 text-2xl">
-            🍒
+            <Crown className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-3xl text-indigo-300 leading-none mb-1" style={{ fontFamily: "'Caveat', cursive" }}>Sondo's Digital</h1>
@@ -668,7 +585,7 @@ export default function App() {
       </header>
 
       {/* Main Display Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 relative" onClick={() => setFocusedId(null)}>
+      <main className="flex-1 flex flex-col items-center justify-center p-4 pb-28 relative" onClick={() => setFocusedId(null)}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentVolume}
@@ -680,7 +597,7 @@ export default function App() {
           >
             {displayMode === 'beads' ? (
               <div className="w-full relative py-12 overflow-hidden touch-none">
-                <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-red-900/50 -translate-y-1/2 z-0" />
+                <div className="absolute top-1/2 left-0 right-0 h-[4px] bg-red-500 -translate-y-1/2 z-0 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
                 <motion.div 
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
@@ -694,7 +611,7 @@ export default function App() {
                     }
                   }}
                   animate={{ x: 0 }}
-                  className="flex items-center gap-12 justify-center relative z-10"
+                  className="flex items-center gap-6 justify-center relative z-10"
                 >
                   {[currentVolumeIdx - 1, currentVolumeIdx, currentVolumeIdx + 1].map((idx) => {
                     if (idx < 0 || idx >= VOLUMES.length) return <div key={`empty-${idx}`} className="w-24 shrink-0" />;
@@ -859,7 +776,7 @@ export default function App() {
         style={{ paddingBottom: 'calc(var(--sab) + 1rem)' }}
         className={`p-4 text-center space-y-2 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <div className="inline-block px-3 py-1 rounded-md bg-yellow-400/20 text-yellow-500 border border-yellow-500/30 text-[10px] font-mono uppercase tracking-widest">
+        <div className="inline-block px-3 py-1 rounded-md bg-yellow-400/20 text-yellow-500 border border-yellow-500/30 text-xs font-medium">
           {t[lang].calibFactor}: {Math.round(ppm * 10) / 10} px/mm
         </div>
         <div className="text-[10px] sm:text-xs text-indigo-400/80 font-semibold flex flex-col gap-1">
@@ -875,7 +792,7 @@ export default function App() {
             onClick={() => { const newLang = lang === 'vi' ? 'en' : 'vi'; setLang(newLang); localStorage.setItem('orchidometer_lang', newLang); }}
             className="px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-[10px] sm:text-xs font-bold hover:text-white hover:bg-slate-700 transition-colors inline-block"
           >
-            {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'} ⇄
+            {lang === 'vi' ? 'Tiếng Việt' : 'English'} ⇄
           </button>
         </div>
       </footer>
