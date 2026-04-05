@@ -52,12 +52,11 @@ const t = {
     rulerPrompt: "Áp thước kẻ vật lý vào đoạn 5cm này",
     sliderHint: "Kéo thanh trượt hoặc dùng nút +/- để tinh chỉnh",
     confirmCalib: "Xác nhận hiệu chuẩn",
-    author: "Sáng chế độc quyền của BS. Đỗ Tiến Sơn",
+    author: "Sáng kiến cải tiến của BS. Đỗ Tiến Sơn",
     worldFirst: "Orchidometer kĩ thuật số đầu tiên sử dụng phương pháp Chipkevitch",
     stage1: "Giai đoạn Tiền dậy thì",
     stage2: "Giai đoạn Dậy thì",
     stage3: "Giai đoạn Trưởng thành",
-    subtitle: "BS. Đỗ Tiến Sơn (TAHN, ESPE)",
     guideTitle: "Hướng dẫn sử dụng",
     guide1: "Thông báo trẻ và gia đình quy trình đối chiếu theo quy trình",
     guide2: "Hiệu chuẩn màn hình với lựa chọn phù hợp, giải thích sơ bộ cho gia đình về các kích cỡ đối chiếu.",
@@ -69,7 +68,11 @@ const t = {
     calibFactor: "Hệ số Hiệu chuẩn Màn hình",
     promoTitle: "Nhập mã kích hoạt",
     promoDesc: "Vui lòng nhập mã kích hoạt để tiếp tục sử dụng ứng dụng.",
-    promoPlaceholder: "Nhập mã số..."
+    promoPlaceholder: "Nhập mã số...",
+    premiumError: "Liên hệ BS. Sơn để nhận code miễn phí",
+    appName: "THƯỚC PRADER ẢO",
+    appAuthor: "Bác sĩ Sơn thiết kế",
+    premiumPromptTitle: "Tính năng Cao cấp"
   },
   en: {
     consentTitle: "Important Notice",
@@ -96,12 +99,11 @@ const t = {
     rulerPrompt: "Align physical ruler to this 5cm segment",
     sliderHint: "Drag slider or use +/- to adjust",
     confirmCalib: "Confirm Calibration",
-    author: "Exclusive invention by Dr. Do Tien Son",
+    author: "Innovation by Dr. Do Tien Son",
     worldFirst: "The first digital Orchidometer using the Chipkevitch method",
     stage1: "Pre-pubertal Stage",
     stage2: "Pubertal Stage",
     stage3: "Adult Stage",
-    subtitle: "Dr. Do Tien Son (TAHN, ESPE)",
     guideTitle: "Instructions for Use",
     guide1: "Inform the child and family of the comparison procedure.",
     guide2: "Calibrate the screen with the appropriate option, briefly explain the comparison sizes to the family.",
@@ -113,7 +115,11 @@ const t = {
     calibFactor: "Standardized Calibration Active",
     promoTitle: "Enter Activation Code",
     promoDesc: "Please enter the activation code to continue using the application.",
-    promoPlaceholder: "Enter code..."
+    promoPlaceholder: "Enter code...",
+    premiumError: "Contact Dr.Son for free premium code",
+    appName: "ORCHIDOMETER",
+    appAuthor: "Sondo's Digital",
+    premiumPromptTitle: "Premium Mode for VIP"
   }
 };
 
@@ -204,6 +210,7 @@ export default function App() {
   const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
   const [premiumCode, setPremiumCode] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [premiumError, setPremiumError] = useState(false);
 
   // Update theme color for status bar based on focus mode
   useEffect(() => {
@@ -217,16 +224,16 @@ export default function App() {
   useEffect(() => {
     const savedPpm = localStorage.getItem('orchidometer_ppm');
     const savedMode = localStorage.getItem('orchidometer_mode');
-    const savedPremium = localStorage.getItem('orchidometer_premium');
     if (savedPpm) {
       setPixelsPerMm(parseFloat(savedPpm));
       setIsCalibrated(true);
     }
     if (savedMode) {
-      setDisplayMode(savedMode as any);
-    }
-    if (savedPremium === 'true') {
-      setIsPremiumUnlocked(true);
+      if (savedMode === 'beads') {
+        setDisplayMode('vertical');
+      } else {
+        setDisplayMode(savedMode as any);
+      }
     }
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
@@ -452,7 +459,7 @@ export default function App() {
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="text-white font-bold text-sm flex items-center gap-2">
                         <Crown className="w-4 h-4 text-yellow-500" />
-                        Tính năng Cao cấp
+                        {t[lang].premiumPromptTitle}
                       </h4>
                       <button onClick={() => setShowPremiumPrompt(false)} className="text-slate-400 hover:text-white transition-colors">✕</button>
                     </div>
@@ -460,23 +467,38 @@ export default function App() {
                       autoFocus
                       type="text"
                       inputMode="numeric"
-                      placeholder="Nhập mã (VD: 6868)"
+                      placeholder="Nhập mã..."
                       value={premiumCode}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^0-9]/g, '');
                         setPremiumCode(val);
                         if (val === '6868') {
                           setIsPremiumUnlocked(true);
-                          localStorage.setItem('orchidometer_premium', 'true');
                           setShowPremiumPrompt(false);
                           setShowSuccess(true);
                           setDisplayMode('beads');
+                          setPremiumError(false);
                           triggerHaptic([100, 50, 100]);
                           setTimeout(() => setShowSuccess(false), 3000);
+                        } else if (val.length >= 4) {
+                          setPremiumError(true);
+                          triggerHaptic(50);
+                        } else {
+                          setPremiumError(false);
                         }
                       }}
                       className="w-full bg-slate-900 border-2 border-slate-600 rounded-lg py-2 px-3 text-white text-center font-bold focus:outline-none focus:border-indigo-500 transition-colors"
                     />
+                    {premiumError && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="mt-3 flex items-center justify-between bg-red-900/30 border border-red-800/50 rounded-lg px-3 py-2"
+                      >
+                        <span className="text-xs text-red-400 font-medium">{t[lang].premiumError}</span>
+                        <button onClick={() => setPremiumError(false)} className="text-red-400 hover:text-red-300 ml-2">✕</button>
+                      </motion.div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -617,13 +639,19 @@ export default function App() {
         className={`px-6 pb-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 text-2xl">
-            🍒
-          </div>
           <div>
-            <h1 className="text-3xl text-indigo-300 leading-none mb-1" style={{ fontFamily: "'Caveat', cursive" }}>Sondo's Digital</h1>
-            <p className="text-xl text-white uppercase tracking-widest font-black">Orchidometer</p>
-            <p className="text-xs text-slate-400 mt-1 font-medium">{t[lang].subtitle}</p>
+            <h1 className="text-xl text-indigo-300 leading-none mb-1 flex items-center gap-2 font-light italic" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+              {t[lang].appAuthor}
+              {isPremiumUnlocked && <Crown className="w-6 h-6 text-yellow-400" />}
+            </h1>
+            <div className="flex items-center gap-2">
+              <p className="text-xl text-white uppercase tracking-widest font-black">{t[lang].appName}</p>
+              {isPremiumUnlocked && (
+                <span className="bg-yellow-400 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                  {lang === 'vi' ? 'Cao cấp' : 'Premium'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -655,7 +683,7 @@ export default function App() {
           >
             {displayMode === 'beads' ? (
               <div className="w-full relative py-12 overflow-hidden touch-none">
-                <div className="absolute top-1/2 left-0 right-0 h-[4px] bg-red-500 -translate-y-1/2 z-0 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                <div className={`absolute top-1/2 left-0 right-0 h-[4px] bg-red-500 -translate-y-1/2 z-0 shadow-[0_0_8px_rgba(239,68,68,0.6)] transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`} />
                 <motion.div 
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
