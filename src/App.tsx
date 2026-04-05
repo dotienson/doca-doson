@@ -79,7 +79,8 @@ const t = {
     calibMethodCard: "Thẻ",
     calibMethodScreen: "Model",
     calibTimePrefix: "lúc",
-    reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3."
+    reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3.",
+    calibWarning: "Xin vui lòng hiệu chuẩn màn hình!"
   },
   en: {
     consentTitle: "Important Notice",
@@ -133,7 +134,8 @@ const t = {
     calibMethodCard: "Card",
     calibMethodScreen: "Model",
     calibTimePrefix: "at",
-    reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3."
+    reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3.",
+    calibWarning: "Please calibrate your screen!"
   }
 };
 
@@ -220,6 +222,7 @@ export default function App() {
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [lastCalibMethod, setLastCalibMethod] = useState<'ruler' | 'card' | 'screen' | null>(null);
   const [lastCalibTime, setLastCalibTime] = useState<string | null>(null);
+  const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState(false);
 
   // Premium Feature States
   const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
@@ -276,6 +279,7 @@ export default function App() {
     }
     setPixelsPerMm(ppm);
     setIsCalibrated(true);
+    setHasCalibratedThisSession(true);
     
     const now = new Date();
     const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
@@ -934,7 +938,17 @@ export default function App() {
         style={{ paddingBottom: 'calc(var(--sab) + 1rem)' }}
         className={`p-4 text-center space-y-2 transition-opacity duration-500 ${focusedId ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <div className="inline-block px-3 py-2 rounded-md bg-yellow-400/20 text-yellow-500 border border-yellow-500/30 text-xs font-medium text-center">
+        <div 
+          onClick={() => { if (!hasCalibratedThisSession) resetCalibration(); }}
+          className={`inline-block px-3 py-2 rounded-md text-xs font-medium text-center transition-colors ${
+            hasCalibratedThisSession 
+              ? 'bg-yellow-400/20 text-yellow-500 border border-yellow-500/30' 
+              : 'bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse cursor-pointer'
+          }`}
+        >
+          {!hasCalibratedThisSession && (
+            <div className="font-bold mb-1">{t[lang].calibWarning}</div>
+          )}
           <div>{t[lang].calibFactor}: {Math.round(ppm * 10) / 10} px/mm</div>
           {lastCalibMethod && lastCalibTime && (
             <div className="text-[10px] mt-1 opacity-80">
