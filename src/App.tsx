@@ -80,7 +80,9 @@ const t = {
     calibMethodScreen: "Model",
     calibTimePrefix: "lúc",
     reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3.",
-    calibWarning: "Xin vui lòng hiệu chuẩn màn hình!"
+    calibWarning: "Xin vui lòng hiệu chuẩn màn hình!",
+    toggle3D: "3D Thể tích",
+    toggle2D: "2D Phẳng"
   },
   en: {
     consentTitle: "Important Notice",
@@ -135,7 +137,9 @@ const t = {
     calibMethodScreen: "Model",
     calibTimePrefix: "at",
     reference: "Reference: Chipkevitch E. et al. Clinical measurement of testicular volume in adolescents: comparison of the reliability of 5 methods. J Urol. 1996 Dec;156(6):2050-3.",
-    calibWarning: "Please calibrate your screen!"
+    calibWarning: "Please calibrate your screen!",
+    toggle3D: "3D Volume",
+    toggle2D: "2D Flat"
   }
 };
 
@@ -157,38 +161,127 @@ const DEVICE_PRESETS = [
 const getStageStyle = (volume: number) => {
   if (volume <= 3) return {
     bg: 'from-emerald-400 to-emerald-600 border-emerald-300/50 shadow-emerald-500/30',
+    radialBg: 'radial-gradient(circle at 35% 30%, #a7f3d0 0%, #34d399 22%, #059669 55%, #065f46 80%, #022c22 100%)',
     text: 'text-emerald-500'
   };
   if (volume === 4) return {
     bg: 'from-red-400 to-red-600 border-red-300/50 shadow-red-500/30',
+    radialBg: 'radial-gradient(circle at 35% 30%, #fecaca 0%, #f87171 22%, #dc2626 55%, #991b1b 80%, #450a0a 100%)',
     text: 'text-red-500'
   };
   if (volume <= 12) return {
     bg: 'from-yellow-400 to-amber-500 border-yellow-300/50 shadow-amber-400/30',
+    radialBg: 'radial-gradient(circle at 35% 30%, #fef08a 0%, #facc15 22%, #d97706 55%, #92400e 80%, #451a03 100%)',
     text: 'text-amber-500'
   };
   return {
     bg: 'from-orange-500 to-red-500 border-orange-400/50 shadow-red-500/30',
+    radialBg: 'radial-gradient(circle at 35% 30%, #fed7aa 0%, #fb923c 22%, #ea580c 55%, #9a3412 80%, #431407 100%)',
     text: 'text-red-500'
   };
 };
 
-const Ellipsoid = ({ id, widthMm, lengthMm, ppm, isHorizontal, styleObj, isFocused, isHidden, onClick }: any) => {
+const triggerHaptic = (pattern: number | number[] = 50) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // Ignore vibration error on unsupported platforms
+    }
+  }
+};
+
+const Ellipsoid = ({ id, widthMm, lengthMm, ppm, isHorizontal, styleObj, isFocused, isHidden, onClick, is3D = true, isBead = false }: any) => {
   const w = isHorizontal ? lengthMm : widthMm;
   const h = isHorizontal ? widthMm : lengthMm;
+  const pixelW = w * ppm;
+  const pixelH = h * ppm;
   
   return (
     <div className={`relative group flex items-center justify-center transition-opacity duration-500 ${isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      {/* 3D Contact Depth Shadow */}
+      {is3D && !isFocused && (
+        <div 
+          style={{ 
+            width: `${pixelW * 0.88}px`, 
+            height: `${Math.max(6, pixelH * 0.22)}px`,
+            bottom: `-${Math.max(6, pixelH * 0.1)}px` 
+          }}
+          className="absolute rounded-[100%] bg-black/65 blur-[6px] pointer-events-none transition-all duration-300"
+        />
+      )}
+
       <motion.div 
-        onClick={(e: any) => { e.stopPropagation(); onClick(isFocused ? null : id); }}
-        style={{ 
-          width: `${w * ppm}px`, 
-          height: `${h * ppm}px`,
+        onClick={(e: any) => { 
+          e.stopPropagation(); 
+          const nextFocus = isFocused ? null : id;
+          triggerHaptic(nextFocus ? 45 : 30);
+          onClick(nextFocus); 
         }}
-        className={`bg-gradient-to-br ${styleObj.bg} rounded-[100%] transition-all duration-500 border-2 cursor-pointer
-          ${isFocused ? 'shadow-[0_0_40px_rgba(255,255,255,0.4)] z-50' : ''}
-        `}
-      />
+        style={{ 
+          width: `${pixelW}px`, 
+          height: `${pixelH}px`,
+          ...(is3D ? {
+            background: styleObj.radialBg,
+            boxShadow: isFocused 
+              ? '0 0 50px rgba(255,255,255,0.7), inset 0 2px 6px rgba(255,255,255,0.6)' 
+              : 'inset 0 2px 5px rgba(255,255,255,0.45), inset 0 -4px 10px rgba(0,0,0,0.6), inset -2px -2px 6px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.45)',
+          } : {})
+        }}
+        className={`relative overflow-hidden rounded-[100%] transition-all duration-500 cursor-pointer ${
+          is3D 
+            ? `border border-white/30 ${isFocused ? 'z-50' : ''}` 
+            : `bg-gradient-to-br ${styleObj.bg} border-2 ${isFocused ? 'shadow-[0_0_40px_rgba(255,255,255,0.4)] z-50' : ''}`
+        }`}
+      >
+        {is3D && (
+          <>
+            {/* Top-left Specular Gloss Reflection */}
+            <div 
+              className="absolute inset-0 pointer-events-none rounded-[100%]"
+              style={{
+                background: 'radial-gradient(ellipse at 35% 26%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.4) 18%, rgba(255,255,255,0.06) 42%, transparent 65%)'
+              }}
+            />
+            {/* Bottom-right Ambient Core Shadow */}
+            <div 
+              className="absolute inset-0 pointer-events-none rounded-[100%]"
+              style={{
+                background: 'radial-gradient(ellipse at 72% 76%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.18) 38%, transparent 68%)'
+              }}
+            />
+            {/* Subtle bottom-left rim bounce light */}
+            <div 
+              className="absolute inset-0 pointer-events-none rounded-[100%]"
+              style={{
+                background: 'radial-gradient(ellipse at 25% 80%, rgba(255,255,255,0.15) 0%, transparent 40%)'
+              }}
+            />
+          </>
+        )}
+
+        {/* Realistic Bead Thread Holes for beads mode */}
+        {isBead && is3D && isHorizontal && (
+          <>
+            {/* Left Cord Hole */}
+            <div 
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[9px] rounded-full"
+              style={{
+                background: 'radial-gradient(ellipse at center, #020617 0%, #0f172a 70%, #1e293b 100%)',
+                boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.95), 1px 0 2px rgba(255,255,255,0.25)'
+              }}
+            />
+            {/* Right Cord Hole */}
+            <div 
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-[5px] h-[9px] rounded-full"
+              style={{
+                background: 'radial-gradient(ellipse at center, #020617 0%, #0f172a 70%, #1e293b 100%)',
+                boxShadow: 'inset -1px 1px 2px rgba(0,0,0,0.95), -1px 0 2px rgba(255,255,255,0.25)'
+              }}
+            />
+          </>
+        )}
+      </motion.div>
     </div>
   );
 };
@@ -197,12 +290,6 @@ const Ellipsoid = ({ id, widthMm, lengthMm, ppm, isHorizontal, styleObj, isFocus
 const CARD_WIDTH_MM = 53.98;
 const CARD_HEIGHT_MM = 85.60;
 const RULER_LENGTH_MM = 50; // 5cm
-
-const triggerHaptic = (pattern: number | number[] = 50) => {
-  if (typeof navigator !== 'undefined' && navigator.vibrate) {
-    navigator.vibrate(pattern);
-  }
-};
 
 export default function App() {
   const [isCalibrated, setIsCalibrated] = useState(false);
@@ -223,6 +310,12 @@ export default function App() {
   const [lastCalibMethod, setLastCalibMethod] = useState<'ruler' | 'card' | 'screen' | null>(null);
   const [lastCalibTime, setLastCalibTime] = useState<string | null>(null);
   const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState(false);
+  const [is3DMode, setIs3DMode] = useState<boolean>(true);
+
+  const handleToggleFocus = (targetId: string | null) => {
+    triggerHaptic(targetId ? 45 : 30);
+    setFocusedId(targetId);
+  };
 
   // Premium Feature States
   const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
@@ -261,6 +354,10 @@ export default function App() {
     const savedLang = localStorage.getItem('orchidometer_lang');
     if (savedLang) {
       setLang(savedLang as 'vi' | 'en');
+    }
+    const saved3D = localStorage.getItem('orchidometer_3d');
+    if (saved3D !== null) {
+      setIs3DMode(saved3D === 'true');
     }
   }, []);
 
@@ -688,7 +785,25 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => {
+              setIs3DMode(prev => {
+                const next = !prev;
+                localStorage.setItem('orchidometer_3d', next ? 'true' : 'false');
+                return next;
+              });
+              triggerHaptic(40);
+            }}
+            title={is3DMode ? t[lang].toggle2D : t[lang].toggle3D}
+            className={`px-2.5 py-1 text-xs font-black rounded-lg transition-all border flex items-center gap-1 ${
+              is3DMode 
+                ? 'bg-gradient-to-r from-indigo-500 to-indigo-700 text-white border-indigo-400/40 shadow-sm shadow-indigo-500/30' 
+                : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+            }`}
+          >
+            {is3DMode ? '3D' : '2D'}
+          </button>
           <button 
             onClick={() => setShowInfo(!showInfo)}
             className="p-2 hover:bg-slate-700 rounded-full transition-colors text-slate-400"
@@ -705,7 +820,7 @@ export default function App() {
       </header>
 
       {/* Main Display Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 pb-28 relative" onClick={() => setFocusedId(null)}>
+      <main className="flex-1 flex flex-col items-center justify-center p-4 pb-28 relative" onClick={() => { if (focusedId !== null) handleToggleFocus(null); }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentVolume}
@@ -717,7 +832,17 @@ export default function App() {
           >
             {displayMode === 'beads' ? (
               <div className="w-full relative py-12 overflow-hidden touch-none">
-                <div className={`absolute top-1/2 left-0 right-0 h-[4px] bg-red-500 -translate-y-1/2 z-0 shadow-[0_0_8px_rgba(239,68,68,0.6)] transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`} />
+                {/* Realistic Braided Medical Cord with Depth */}
+                <div className={`absolute top-1/2 left-0 right-0 h-[6px] -translate-y-1/2 z-0 transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>
+                  <div className="absolute inset-0 bg-black/60 blur-[3px] translate-y-1.5" />
+                  <div 
+                    className="w-full h-full rounded-full border-t border-red-300/40 border-b border-red-950/80 shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+                    style={{
+                      background: 'linear-gradient(180deg, #f87171 0%, #ef4444 35%, #b91c1c 70%, #450a0a 100%)',
+                      backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.18) 0, rgba(255,255,255,0.18) 3px, transparent 3px, transparent 7px)'
+                    }}
+                  />
+                </div>
                 <motion.div 
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
@@ -751,7 +876,9 @@ export default function App() {
                           widthMm={w} lengthMm={l} ppm={ppm} isHorizontal={true} styleObj={style} 
                           isFocused={focusedId === `beads-${vol}`}
                           isHidden={focusedId !== null && focusedId !== `beads-${vol}`}
-                          onClick={setFocusedId}
+                          onClick={handleToggleFocus}
+                          is3D={is3DMode}
+                          isBead={true}
                         />
                         <div className={`absolute -bottom-12 font-bold ${style.text} text-xl transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{vol}mL</div>
                       </div>
@@ -795,7 +922,8 @@ export default function App() {
                           widthMm={w} lengthMm={l} ppm={ppm} isHorizontal={false} styleObj={style} 
                           isFocused={focusedId === `triple-${vol}`}
                           isHidden={focusedId !== null && focusedId !== `triple-${vol}`}
-                          onClick={setFocusedId}
+                          onClick={handleToggleFocus}
+                          is3D={is3DMode}
                         />
                         <div className={`mt-8 font-bold ${style.text} ${isCenter ? 'text-3xl' : 'text-xl'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{vol}mL</div>
                         <div className={`font-mono text-slate-400 mt-1 ${isCenter ? 'text-sm' : 'text-[10px]'} transition-opacity duration-500 ${focusedId ? 'opacity-0' : 'opacity-100'}`}>{w} x {l} mm</div>
@@ -812,7 +940,8 @@ export default function App() {
                     widthMm={widthMm} lengthMm={lengthMm} ppm={ppm} isHorizontal={false} styleObj={stageStyle} 
                     isFocused={focusedId === 'vertical'}
                     isHidden={focusedId !== null && focusedId !== 'vertical'}
-                    onClick={setFocusedId}
+                    onClick={handleToggleFocus}
+                    is3D={is3DMode}
                   />
                 )}
                 {(displayMode === 'horizontal' || displayMode === 'both') && (
@@ -821,7 +950,8 @@ export default function App() {
                     widthMm={widthMm} lengthMm={lengthMm} ppm={ppm} isHorizontal={true} styleObj={stageStyle} 
                     isFocused={focusedId === 'horizontal'}
                     isHidden={focusedId !== null && focusedId !== 'horizontal'}
-                    onClick={setFocusedId}
+                    onClick={handleToggleFocus}
+                    is3D={is3DMode}
                   />
                 )}
               </div>
