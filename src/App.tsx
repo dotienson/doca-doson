@@ -10,7 +10,9 @@ import {
   Eye,
   EyeOff,
   Lock,
+  LogOut,
   Moon,
+  Ruler,
   Sun,
   X,
 } from 'lucide-react';
@@ -19,10 +21,12 @@ import {
   ORCHIDOMETER_DATA,
   RULER_LENGTH_MM,
   VOLUMES,
+  detectDevicePreset,
   getStageStyle,
   triggerHaptic,
   t,
   type CalibMethod,
+  type DetectedDeviceInfo,
   type DisplayMode,
   type Language,
   type ThemeMode,
@@ -30,6 +34,7 @@ import {
 import { Ellipsoid2D } from './components/Ellipsoid2D';
 import { Orchidometer3DBeads } from './components/Orchidometer3DBeads';
 import { CalibrationView } from './components/CalibrationView';
+import { OfflineIndicator, PWAInstallButton } from './components/PWAInstallButton';
 
 export default function App() {
   const [isCalibrated, setIsCalibrated] = useState(false);
@@ -48,7 +53,11 @@ export default function App() {
   const [calibMethod, setCalibMethod] = useState<CalibMethod>('screen');
   const [displayMode, setDisplayMode] = useState<DisplayMode>('vertical');
   const [screenInches, setScreenInches] = useState<number>(6.5);
-  const [selectedDevice, setSelectedDevice] = useState<number>(6.5);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('iphone-xsmax');
+  const [detectedInfo, setDetectedInfo] = useState<DetectedDeviceInfo | null>(null);
+  const [rememberSession, setRememberSession] = useState<boolean>(true);
+  const [rememberDuration, setRememberDuration] = useState<'24h' | '7d'>('7d');
+  const [showQuickRuler, setShowQuickRuler] = useState<boolean>(false);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [lang, setLang] = useState<Language>('vi');
   const [theme, setTheme] = useState<ThemeMode>('light');
@@ -146,7 +155,63 @@ export default function App() {
 
     const saved3D = localStorage.getItem('orchidometer_3d');
     if (saved3D !== null) setIs3DShading(saved3D === 'true');
+
+    const savedQuickRuler = localStorage.getItem('orchidometer_quick_ruler');
+    if (savedQuickRuler === 'true') setShowQuickRuler(true);
+
+    const savedRememberDur = localStorage.getItem('orchidometer_remember_duration');
+    if (savedRememberDur === '24h' || savedRememberDur === '7d') {
+      setRememberDuration(savedRememberDur);
+    }
+
+    const savedSessionUntil = localStorage.getItem('orchidometer_session_until');
+    if (savedSessionUntil && savedAccount && Number(savedSessionUntil) > Date.now()) {
+      setHasConsented(true);
+      setIsCodeEntered(true);
+    } else if (savedSessionUntil) {
+      localStorage.removeItem('orchidometer_session_until');
+    }
+
+    const detected = detectDevicePreset();
+    setDetectedInfo(detected);
+    const savedDeviceId = localStorage.getItem('orchidometer_device_id');
+    const savedInches = localStorage.getItem('orchidometer_screen_inches');
+    if (savedDeviceId && savedInches && savedPpm) {
+      setSelectedDeviceId(savedDeviceId);
+      setScreenInches(parseFloat(savedInches));
+    } else {
+      setSelectedDeviceId(detected.presetId);
+      setScreenInches(detected.size);
+    }
   }, []);
+
+  const handleAutoDetect = () => {
+    triggerHaptic(25);
+    const detected = detectDevicePreset();
+    setDetectedInfo(detected);
+    setSelectedDeviceId(detected.presetId);
+    setScreenInches(detected.size);
+  };
+
+  const handleSignOut = () => {
+    triggerHaptic(30);
+    localStorage.removeItem('orchidometer_session_until');
+    setIsCodeEntered(false);
+    setPromoCode('');
+    setLoginPremiumCode('');
+    setLoginError(null);
+    setShowInfo(false);
+    setFocusedId(null);
+  };
+
+  const toggleQuickRuler = () => {
+    triggerHaptic(20);
+    setShowQuickRuler((prev) => {
+      const next = !prev;
+      localStorage.setItem('orchidometer_quick_ruler', next ? 'true' : 'false');
+      return next;
+    });
+  };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,6 +239,15 @@ export default function App() {
 
     setLoginError(null);
     localStorage.setItem('orchidometer_account', trimmedAccount);
+
+    if (rememberSession) {
+      const ttlMs =
+        rememberDuration === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('orchidometer_session_until', String(Date.now() + ttlMs));
+      localStorage.setItem('orchidometer_remember_duration', rememberDuration);
+    } else {
+      localStorage.removeItem('orchidometer_session_until');
+    }
 
     if (trimmedPremium === '6868') {
       setIsPremiumUnlocked(true);
@@ -218,6 +292,8 @@ export default function App() {
     localStorage.setItem('orchidometer_mode', displayMode);
     localStorage.setItem('orchidometer_calib_method', calibMethod);
     localStorage.setItem('orchidometer_calib_time', timeStr);
+    localStorage.setItem('orchidometer_device_id', selectedDeviceId);
+    localStorage.setItem('orchidometer_screen_inches', screenInches.toString());
   };
 
   const resetCalibration = () => {
@@ -595,6 +671,59 @@ export default function App() {
             </div>
           </div>
 
+          {/* Remember session toggle */}
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <button
+              type="button"
+              onClick={() => setRememberSession((v) => !v)}
+              className={`inline-flex items-center gap-2 text-xs font-medium min-h-[32px] transition-colors ${
+                isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${
+                  rememberSession
+                    ? isDark
+                      ? 'bg-teal-500 border-teal-400 text-slate-950'
+                      : 'bg-teal-600 border-teal-600 text-white'
+                    : isDark
+                    ? 'bg-[#090B0E] border-white/20 text-transparent'
+                    : 'bg-white border-slate-300 text-transparent'
+                }`}
+              >
+                <Check className="w-3 h-3 stroke-[3]" />
+              </span>
+              <span>{t[lang].rememberLabel}</span>
+            </button>
+
+            {rememberSession && (
+              <div
+                className={`inline-flex items-center rounded-lg p-0.5 border text-[11px] font-semibold ${
+                  isDark ? 'bg-[#090B0E] border-white/10' : 'bg-slate-100 border-slate-200'
+                }`}
+              >
+                {(['24h', '7d'] as const).map((dur) => (
+                  <button
+                    key={dur}
+                    type="button"
+                    onClick={() => setRememberDuration(dur)}
+                    className={`px-2 py-0.5 rounded-md transition-colors ${
+                      rememberDuration === dur
+                        ? isDark
+                          ? 'bg-teal-500 text-slate-950'
+                          : 'bg-white text-slate-900 shadow-xs'
+                        : isDark
+                        ? 'text-slate-400 hover:text-slate-200'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {dur === '24h' ? t[lang].remember24h : t[lang].remember7d}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {loginError && (
             <p
               className={`text-xs border rounded-xl px-3 py-2 leading-snug ${
@@ -618,6 +747,10 @@ export default function App() {
             <Lock className="w-4 h-4 shrink-0" />
             <span>{t[lang].loginButton}</span>
           </button>
+
+          <div className="flex justify-center empty:hidden">
+            <PWAInstallButton lang={lang} theme={theme} compact />
+          </div>
         </form>
       </div>
     );
@@ -639,8 +772,10 @@ export default function App() {
         setDisplayMode={setDisplayMode}
         screenInches={screenInches}
         setScreenInches={setScreenInches}
-        selectedDevice={selectedDevice}
-        setSelectedDevice={setSelectedDevice}
+        selectedDeviceId={selectedDeviceId}
+        setSelectedDeviceId={setSelectedDeviceId}
+        detectedInfo={detectedInfo}
+        onAutoDetect={handleAutoDetect}
         isPremiumUnlocked={isPremiumUnlocked}
         setIsPremiumUnlocked={setIsPremiumUnlocked}
         showPremiumPrompt={showPremiumPrompt}
@@ -729,11 +864,12 @@ export default function App() {
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className={`hidden sm:inline-flex items-center min-h-[38px] px-1.5 transition-colors whitespace-nowrap shrink-0 ${
+                className={`inline-flex items-center min-h-[36px] px-1.5 transition-colors whitespace-nowrap shrink-0 font-medium ${
                   isDark ? 'hover:text-white' : 'hover:text-slate-900'
                 }`}
               >
-                {lang === 'vi' ? 'VI / EN' : 'EN / VI'}
+                <span className="sm:hidden">{lang === 'vi' ? 'VI' : 'EN'}</span>
+                <span className="hidden sm:inline">{lang === 'vi' ? 'VI / EN' : 'EN / VI'}</span>
               </button>
             </nav>
 
@@ -975,12 +1111,75 @@ export default function App() {
           </div>
         )}
 
+        {/* Quick 1 cm (10 mm) Edge Calibration Verification Ruler */}
+        {showQuickRuler && !isFocused && (
+          <div
+            aria-label={t[lang].quickRulerLabel}
+            className="pointer-events-none select-none absolute right-1.5 sm:right-3.5 top-1/2 -translate-y-1/2 z-20 flex flex-col items-end gap-1"
+          >
+            <span
+              className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded border ${
+                isDark
+                  ? 'bg-[#0D1117]/90 border-teal-400/35 text-teal-300'
+                  : 'bg-white/95 border-teal-600/35 text-teal-700 shadow-xs'
+              }`}
+            >
+              1 cm
+            </span>
+            <div
+              className="relative flex items-stretch justify-end"
+              style={{ height: `${Math.max(18, 10 * ppm)}px` }}
+            >
+              {/* mm tick marks 0..10 */}
+              <div className="relative w-5 h-full">
+                {Array.from({ length: 11 }).map((_, mm) => {
+                  const isMajor = mm === 0 || mm === 10;
+                  const isMid = mm === 5;
+                  return (
+                    <div
+                      key={mm}
+                      style={{ top: `${(mm / 10) * 100}%` }}
+                      className={`absolute right-0 -translate-y-1/2 ${
+                        isMajor
+                          ? isDark
+                            ? 'w-5 h-[1.5px] bg-teal-400'
+                            : 'w-5 h-[1.5px] bg-teal-600'
+                          : isMid
+                          ? isDark
+                            ? 'w-3.5 h-[1.5px] bg-teal-300/80'
+                            : 'w-3.5 h-[1.5px] bg-teal-600/80'
+                          : isDark
+                          ? 'w-2 h-[1px] bg-slate-400/60'
+                          : 'w-2 h-[1px] bg-slate-500/60'
+                      }`}
+                    />
+                  );
+                })}
+                <div
+                  className={`absolute right-0 top-0 bottom-0 w-[1.5px] ${
+                    isDark ? 'bg-teal-400' : 'bg-teal-600'
+                  }`}
+                />
+              </div>
+            </div>
+            <span
+              className={`text-[9px] tabular-nums font-medium ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
+              10 mm
+            </span>
+          </div>
+        )}
+
         {/* Focus Mode Exit Cue */}
         {isFocused && (
           <div className="pointer-events-none fixed bottom-6 left-0 right-0 text-center text-xs text-white/45 z-50">
             {t[lang].focusExitHint}
           </div>
         )}
+
+        <OfflineIndicator lang={lang} theme={theme} />
       </main>
 
       {/* Collapsible Bottom Control Dock — Compact Mobile Thumb Zone */}
@@ -1031,27 +1230,47 @@ export default function App() {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setControlsCollapsed((c) => !c)}
-                className={`min-h-[28px] px-2 text-[11px] font-medium flex items-center gap-1 transition-colors shrink-0 whitespace-nowrap ${
-                  isDark
-                    ? 'text-slate-300 hover:text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {controlsCollapsed ? (
-                  <>
-                    <ChevronUp className="w-3.5 h-3.5" />
-                    <span>{t[lang].controlsShow}</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-3.5 h-3.5" />
-                    <span>{t[lang].controlsHide}</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={toggleQuickRuler}
+                  aria-pressed={showQuickRuler}
+                  className={`min-h-[28px] px-2 rounded-md border text-[11px] font-semibold flex items-center gap-1 transition-colors whitespace-nowrap ${
+                    showQuickRuler
+                      ? isDark
+                        ? 'bg-teal-500/15 border-teal-400/40 text-teal-300'
+                        : 'bg-teal-50 border-teal-300 text-teal-700'
+                      : isDark
+                      ? 'bg-transparent border-white/10 text-slate-400 hover:text-white'
+                      : 'bg-transparent border-slate-200 text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Ruler className="w-3 h-3 shrink-0" />
+                  <span>{t[lang].quickRulerBtn}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setControlsCollapsed((c) => !c)}
+                  className={`min-h-[28px] px-2 text-[11px] font-medium flex items-center gap-1 transition-colors shrink-0 whitespace-nowrap ${
+                    isDark
+                      ? 'text-slate-300 hover:text-white'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {controlsCollapsed ? (
+                    <>
+                      <ChevronUp className="w-3.5 h-3.5" />
+                      <span>{t[lang].controlsShow}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span>{t[lang].controlsHide}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1365,6 +1584,33 @@ export default function App() {
                   }`}
                 >
                   {lang === 'vi' ? 'Tiếng Việt / EN' : 'English / VI'}
+                </button>
+              </div>
+
+              <div
+                className={`flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t ${
+                  isDark ? 'border-white/10' : 'border-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
+                  >
+                    {t[lang].signedInAs}: <strong className={isDark ? 'text-white' : 'text-slate-900'}>{account || 'BS'}</strong>
+                  </span>
+                  <PWAInstallButton lang={lang} theme={theme} compact />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className={`min-h-[34px] px-2.5 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 transition-colors shrink-0 ${
+                    isDark
+                      ? 'bg-[#161B22] border-white/10 text-slate-300 hover:text-white hover:bg-[#1E2530]'
+                      : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>{t[lang].signOut}</span>
                 </button>
               </div>
 

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Lock, Moon, Ruler, Sun, X } from 'lucide-react';
+import { Check, Lock, Moon, Ruler, Smartphone, Sun, X } from 'lucide-react';
 import {
   CARD_HEIGHT_MM,
   CARD_WIDTH_MM,
@@ -7,10 +7,12 @@ import {
   triggerHaptic,
   t,
   type CalibMethod,
+  type DetectedDeviceInfo,
   type DisplayMode,
   type Language,
   type ThemeMode,
 } from '../data/orchidometer';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface CalibrationViewProps {
   lang: Language;
@@ -25,8 +27,10 @@ interface CalibrationViewProps {
   setDisplayMode: (m: DisplayMode) => void;
   screenInches: number;
   setScreenInches: (s: number) => void;
-  selectedDevice: number;
-  setSelectedDevice: (d: number) => void;
+  selectedDeviceId: string;
+  setSelectedDeviceId: (id: string) => void;
+  detectedInfo: DetectedDeviceInfo | null;
+  onAutoDetect: () => void;
   isPremiumUnlocked: boolean;
   setIsPremiumUnlocked: (v: boolean) => void;
   showPremiumPrompt: boolean;
@@ -52,8 +56,10 @@ export function CalibrationView({
   setDisplayMode,
   screenInches,
   setScreenInches,
-  selectedDevice,
-  setSelectedDevice,
+  selectedDeviceId,
+  setSelectedDeviceId,
+  detectedInfo,
+  onAutoDetect,
   isPremiumUnlocked,
   setIsPremiumUnlocked,
   showPremiumPrompt,
@@ -254,9 +260,27 @@ export function CalibrationView({
             isDark ? 'bg-[#11151B] border-white/10' : 'bg-white border-slate-200'
           }`}
         >
-          <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-            {t[lang].screenPrompt}
-          </p>
+          <div className="flex items-start justify-between gap-2.5">
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              {t[lang].screenPrompt}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(25);
+                onAutoDetect();
+              }}
+              className={`min-h-[34px] px-2.5 text-xs font-semibold rounded-lg border inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors ${
+                isDark
+                  ? 'bg-[#1A2029] border-white/10 text-teal-300 hover:bg-[#222B37]'
+                  : 'bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5 shrink-0" />
+              <span>{t[lang].autoDetectBtn}</span>
+            </button>
+          </div>
+
           <select
             aria-label={t[lang].screenPrompt}
             className={`w-full min-h-[44px] border rounded-xl py-2.5 px-3 text-sm font-medium focus:outline-none focus:border-teal-500 ${
@@ -264,20 +288,39 @@ export function CalibrationView({
                 ? 'bg-[#090B0E] border-white/15 text-white'
                 : 'bg-white border-slate-300 text-slate-900'
             }`}
-            value={selectedDevice}
+            value={selectedDeviceId}
             onChange={(e) => {
-              const val = parseFloat(e.target.value);
-              setSelectedDevice(val);
-              if (val > 0) setScreenInches(val);
+              const id = e.target.value;
+              setSelectedDeviceId(id);
+              const found = DEVICE_PRESETS.find((p) => p.id === id);
+              if (found && found.size > 0) setScreenInches(found.size);
             }}
           >
             {DEVICE_PRESETS.map((preset) => (
-              <option key={preset.nameVi} value={preset.size}>
+              <option key={preset.id} value={preset.id}>
                 {lang === 'vi' ? preset.nameVi : preset.nameEn}{' '}
                 {preset.size > 0 ? `(${preset.size}")` : ''}
               </option>
             ))}
           </select>
+
+          {detectedInfo && (
+            <div
+              className={`text-[11px] leading-relaxed rounded-xl px-3 py-2 border ${
+                isDark
+                  ? 'bg-[#090B0E] border-white/10 text-slate-400'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+            >
+              <span className="tabular-nums font-semibold">
+                {detectedInfo.widthPx}×{detectedInfo.heightPx} @{detectedInfo.dpr}x
+              </span>{' '}
+              —{' '}
+              {detectedInfo.matched
+                ? `${t[lang].autoDetectedNote} (${detectedInfo.size}")`
+                : t[lang].autoDetectCustomNote}
+            </div>
+          )}
 
           <div
             className={`flex items-center justify-between pt-2.5 border-t ${
@@ -296,7 +339,7 @@ export function CalibrationView({
                 value={screenInches}
                 onChange={(e) => {
                   setScreenInches(parseFloat(e.target.value) || 6.1);
-                  setSelectedDevice(0);
+                  setSelectedDeviceId('custom');
                 }}
                 className={`w-24 min-h-[42px] text-center tabular-nums text-lg font-semibold border rounded-xl py-1.5 focus:outline-none focus:border-teal-500 ${
                   isDark
@@ -445,7 +488,8 @@ export function CalibrationView({
               Chipkevitch 1996
             </a>
           </nav>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <PWAInstallButton lang={lang} theme={theme} compact />
             <button
               type="button"
               onClick={onToggleTheme}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { Columns2, Pin, Volume2, VolumeX } from 'lucide-react';
 import {
   ORCHIDOMETER_DATA,
   VOLUMES,
@@ -11,6 +12,62 @@ import {
   type Language,
   type ThemeMode,
 } from '../data/orchidometer';
+
+// Subtle Web Audio synthesizer for realistic oak wood bead clack (iOS Safari compatible)
+let woodAudioCtx: AudioContext | null = null;
+let lastWoodClackAt = 0;
+
+function ensureWoodAudioReady() {
+  if (typeof window === 'undefined') return;
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return;
+  if (!woodAudioCtx) {
+    woodAudioCtx = new AudioCtx();
+  }
+  if (woodAudioCtx.state === 'suspended') {
+    void woodAudioCtx.resume().catch(() => {});
+  }
+}
+
+function playWoodClack(intensity = 0.7) {
+  if (!woodAudioCtx || woodAudioCtx.state !== 'running') return;
+  const nowMs = performance.now();
+  if (nowMs - lastWoodClackAt < 85) return;
+  lastWoodClackAt = nowMs;
+
+  const ctx = woodAudioCtx;
+  const now = ctx.currentTime;
+  const vol = Math.max(0.02, Math.min(0.14, 0.1 * intensity));
+
+  // Warm hollow oak body resonance
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(590 + Math.random() * 65, now);
+  osc.frequency.exponentialRampToValueAtTime(320, now + 0.026);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.linearRampToValueAtTime(vol, now + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.032);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.036);
+
+  // Crisp wood surface transient
+  const clickOsc = ctx.createOscillator();
+  const clickGain = ctx.createGain();
+  clickOsc.type = 'sine';
+  clickOsc.frequency.setValueAtTime(1180 + Math.random() * 140, now);
+  clickOsc.frequency.exponentialRampToValueAtTime(740, now + 0.01);
+  clickGain.gain.setValueAtTime(vol * 0.45, now);
+  clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.011);
+  clickOsc.connect(clickGain);
+  clickGain.connect(ctx.destination);
+  clickOsc.start(now);
+  clickOsc.stop(now + 0.014);
+}
 
 // Pre-allocated math helpers (Zero GC in useFrame)
 const _xAxis = new THREE.Vector3(1, 0, 0);
@@ -300,11 +357,27 @@ function solveChainSlide(
   return hitNeighbor;
 }
 
-// High-DPI (2048x1024) Oak Wood Albedo + Crisp Front & Back Engraved Volume Numeral Map
+function blendHex(hexA: string, hexB: string, t: number): string {
+  const parse = (h: string) => {
+    const clean = h.replace('#', '');
+    return [
+      parseInt(clean.slice(0, 2), 16),
+      parseInt(clean.slice(2, 4), 16),
+      parseInt(clean.slice(4, 6), 16),
+    ];
+  };
+  const [r1, g1, b1] = parse(hexA);
+  const [r2, g2, b2] = parse(hexB);
+  const mix = (a: number, b: number) => Math.round(a + (b - a) * t);
+  const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+  return `#${toHex(mix(r1, r2))}${toHex(mix(g1, g2))}${toHex(mix(b1, b2))}`;
+}
+
+// High-DPI (2048x1024) Stained Oak Wood Albedo + Crisp Front & Back Engraved Volume Numeral Map
 function createOakBeadMaps(
   volume: number,
   baseHex: string,
-  highlightHex: string,
+  _highlightHex: string,
   darkHex: string,
   maxAnisotropy: number,
   isVertical: boolean
@@ -322,30 +395,37 @@ function createOakBeadMaps(
   bumpCanvas.height = 512;
   const bCtx = bumpCanvas.getContext('2d')!;
 
+  // Warm satin-stained beech/oak tones (rich and lively without dark muddiness)
+  const warmOakMid = '#7d522d';
+  const warmOakDeep = '#4a2c12';
+  const stainedTop = blendHex(baseHex, warmOakMid, 0.12);
+  const stainedMid = blendHex(baseHex, warmOakMid, 0.22);
+  const stainedDark = blendHex(darkHex, warmOakDeep, 0.24);
+
   // Stained Oak Wood Base Gradient
   const grad = ctx.createLinearGradient(0, 0, 0, height);
-  grad.addColorStop(0, highlightHex);
-  grad.addColorStop(0.26, baseHex);
-  grad.addColorStop(0.76, baseHex);
-  grad.addColorStop(1, darkHex);
+  grad.addColorStop(0, stainedTop);
+  grad.addColorStop(0.28, stainedMid);
+  grad.addColorStop(0.74, stainedMid);
+  grad.addColorStop(1, stainedDark);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, width, height);
 
   bCtx.fillStyle = '#808080';
   bCtx.fillRect(0, 0, bumpCanvas.width, bumpCanvas.height);
 
-  // Longitudinal Natural Oak Wood Fibers & Medullary Rays
-  for (let i = 0; i < 95; i++) {
-    const yBase = (i / 95) * height;
-    const isDarkRing = i % 5 === 0;
-    const alpha = isDarkRing ? 0.22 : 0.08 + ((i * 37) % 10) * 0.008;
+  // Soft, sanded longitudinal wood fibers & subtle medullary rings
+  for (let i = 0; i < 72; i++) {
+    const yBase = (i / 72) * height;
+    const isDarkRing = i % 4 === 0;
+    const alpha = isDarkRing ? 0.13 : 0.05 + ((i * 37) % 10) * 0.004;
     ctx.strokeStyle = isDarkRing
-      ? `rgba(38, 18, 4, ${alpha})`
-      : `rgba(60, 30, 8, ${alpha})`;
-    ctx.lineWidth = isDarkRing ? 4.5 : 2;
+      ? `rgba(38, 18, 5, ${alpha})`
+      : `rgba(64, 32, 10, ${alpha})`;
+    ctx.lineWidth = isDarkRing ? 7.5 : 3.8;
 
-    bCtx.strokeStyle = isDarkRing ? 'rgba(30, 30, 30, 0.35)' : 'rgba(200, 200, 200, 0.16)';
-    bCtx.lineWidth = isDarkRing ? 2.5 : 1;
+    bCtx.strokeStyle = isDarkRing ? 'rgba(55, 55, 55, 0.18)' : 'rgba(175, 175, 175, 0.09)';
+    bCtx.lineWidth = isDarkRing ? 3.2 : 1.5;
 
     ctx.beginPath();
     bCtx.beginPath();
@@ -366,12 +446,12 @@ function createOakBeadMaps(
     bCtx.stroke();
   }
 
-  // Subtle fine oak wood pores
-  ctx.fillStyle = 'rgba(28, 12, 2, 0.14)';
-  for (let p = 0; p < 520; p++) {
+  // Faint fine wood pores (sanded smooth under satin varnish)
+  ctx.fillStyle = 'rgba(30, 14, 4, 0.08)';
+  for (let p = 0; p < 340; p++) {
     const px = (p * 7919) % width;
     const py = (p * 3571) % height;
-    const plen = 14 + (p % 28);
+    const plen = 14 + (p % 26);
     ctx.fillRect(px, py, plen, 2);
   }
 
@@ -652,6 +732,7 @@ interface ChainRuntimeState {
   slideVel: Float64Array;
   rolls: Float64Array;
   rollVel: Float64Array;
+  wasColliding: boolean;
   tiltX: number;
   tiltY: number;
   swayX: number;
@@ -795,13 +876,15 @@ function BeadAssembly({
           <meshPhysicalMaterial
             map={oakMaps.map}
             bumpMap={oakMaps.bumpMap}
-            bumpScale={0.14}
-            roughness={0.52}
-            metalness={0.02}
-            clearcoat={0.22}
-            clearcoatRoughness={0.44}
+            bumpScale={0.09}
+            roughness={0.56}
+            metalness={0.0}
+            reflectivity={0.42}
+            clearcoat={0.15}
+            clearcoatRoughness={0.46}
+            envMapIntensity={0.42}
             emissive={hovered && !isFocused ? style.hex : '#000000'}
-            emissiveIntensity={hovered && !isFocused ? 0.08 : 0}
+            emissiveIntensity={hovered && !isFocused ? 0.035 : 0}
           />
         </mesh>
 
@@ -854,6 +937,9 @@ interface ChainSceneProps {
   isVertical: boolean;
   isSoftwareGl: boolean;
   theme: ThemeMode;
+  soundEnabled: boolean;
+  compareEnabled: boolean;
+  pinnedIdx: number;
   camDragOffsetMmRef: React.MutableRefObject<number>;
   dragModeRef: React.MutableRefObject<'none' | 'pan' | 'bead' | 'roll-active'>;
   wasDraggedRef: React.MutableRefObject<boolean>;
@@ -871,6 +957,9 @@ function ChainScene({
   isVertical,
   isSoftwareGl,
   theme,
+  soundEnabled,
+  compareEnabled,
+  pinnedIdx,
   camDragOffsetMmRef,
   dragModeRef,
   wasDraggedRef,
@@ -885,6 +974,8 @@ function ChainScene({
   const rimLightRef = useRef<THREE.DirectionalLight>(null);
   const startKnotRef = useRef<THREE.Group>(null);
   const endKnotRef = useRef<THREE.Group>(null);
+  const pinnedGroupRef = useRef<THREE.Group>(null);
+  const pinnedRollRef = useRef<THREE.Group>(null);
   const outerGroupRefs = useRef<(THREE.Group | null)[]>(
     new Array(chainConfig.specs.length).fill(null)
   );
@@ -1152,11 +1243,11 @@ function ChainScene({
       );
     }
 
-    // 2. Bead inertial slide & in-place longitudinal roll physics
+    // 2. Bead inertial slide & in-place longitudinal roll
     const isActivelyDraggingBead = dragModeRef.current === 'bead';
     for (let i = 0; i < n; i++) {
       if (!isActivelyDraggingBead && Math.abs(state.slideVel[i]) > 0.05) {
-        solveChainSlide(
+        const hitNeighbor = solveChainSlide(
           state.xs,
           specs,
           chainConfig.startS,
@@ -1164,6 +1255,11 @@ function ChainScene({
           i,
           state.xs[i] + state.slideVel[i] * delta
         );
+        if (hitNeighbor && !state.wasColliding) {
+          if (soundEnabled) playWoodClack(Math.min(1, Math.abs(state.slideVel[i]) / 45));
+          triggerHaptic(12);
+        }
+        state.wasColliding = hitNeighbor;
         state.slideVel[i] *= Math.exp(-12 * delta);
         state.cordDirty = true;
       } else if (!isActivelyDraggingBead) {
@@ -1203,16 +1299,43 @@ function ChainScene({
       state.cordDirty = false;
     }
 
-    // 4. Camera framing: hold steady while user slides a bead under their finger; pan/center otherwise
+    // 4. Camera framing & optional Pinned Reference Compare Bead positioning (1:1 mm)
     const activeS = state.xs[currentVolumeIdx] ?? 0;
     const isPanning = dragModeRef.current === 'pan';
+
+    const nx = -Math.sin(state.angleRad);
+    const ny = Math.cos(state.angleRad);
+    // Horizontal: place pinned bead -30mm below chain (clear of top HUD). Vertical: +30mm to the right.
+    const compareOffsetMm = 30 * (isVertical ? 1 : -1);
+
+    if (compareEnabled && !isFocused && pinnedGroupRef.current) {
+      const activePt = cordWorldPointAndTangent(activeS, state.angleRad);
+      pinnedGroupRef.current.position.set(
+        activePt.x + nx * compareOffsetMm,
+        activePt.y + ny * compareOffsetMm,
+        0
+      );
+      _tmpTangent.set(activePt.tx, activePt.ty, 0);
+      pinnedGroupRef.current.quaternion.setFromUnitVectors(_xAxis, _tmpTangent);
+      if (pinnedRollRef.current) {
+        pinnedRollRef.current.rotation.x = THREE.MathUtils.damp(
+          pinnedRollRef.current.rotation.x,
+          0,
+          12,
+          delta
+        );
+      }
+    }
 
     if (dragModeRef.current !== 'bead') {
       const targetS = activeS + (isPanning ? camDragOffsetMmRef.current : 0);
       const camPt = cordWorldPointAndTangent(targetS, state.angleRad);
+      const centerShift = compareEnabled && !isFocused ? 0.45 * compareOffsetMm : 0;
+      const targetCamX = camPt.x + nx * centerShift;
+      const targetCamY = camPt.y + ny * centerShift;
       const dampSpeed = isPanning ? 26 : 10;
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, camPt.x, dampSpeed, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, camPt.y, dampSpeed, delta);
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, dampSpeed, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, dampSpeed, delta);
       camera.position.z = 200;
 
       _tmpVec.set(camera.position.x, camera.position.y, 0);
@@ -1285,12 +1408,12 @@ function ChainScene({
 
       <StudioEnvironment />
 
-      <hemisphereLight args={isLight ? ['#f8fafc', '#475569', 0.56] : ['#dbeafe', '#090d16', 0.6]} />
+      <hemisphereLight args={isLight ? ['#f1f5f9', '#475569', 0.48] : ['#dbeafe', '#0b101b', 0.5]} />
       <directionalLight
         ref={keyLightRef}
         position={[-75, 105, 130]}
-        intensity={isLight ? 1.85 : 2.05}
-        color="#fff8eb"
+        intensity={isLight ? 1.52 : 1.68}
+        color="#fff8ec"
         castShadow={!isSoftwareGl}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={10}
@@ -1305,7 +1428,7 @@ function ChainScene({
       <directionalLight
         ref={rimLightRef}
         position={[90, -55, -35]}
-        intensity={isLight ? 0.95 : 1.2}
+        intensity={isLight ? 0.68 : 0.84}
         color={isLight ? '#e2e8f0' : '#93c5fd'}
       />
 
@@ -1435,6 +1558,32 @@ function ChainScene({
         />
       ))}
 
+      {/* Pinned Reference Bead for 1:1 mm Side-by-Side Comparison */}
+      {compareEnabled && !isFocused && (
+        <BeadAssembly
+          key={`pinned-${chainConfig.specs[pinnedIdx].volume}`}
+          spec={chainConfig.specs[pinnedIdx]}
+          isActive={false}
+          isFocused={false}
+          isVertical={isVertical}
+          isSoftwareGl={isSoftwareGl}
+          sharedSphereGeo={sharedGeos.sphere}
+          sharedBoreHoleGeo={sharedGeos.boreHole}
+          sharedBoreRimGeo={sharedGeos.boreRim}
+          sharedInnerCordGeo={sharedGeos.innerCord}
+          cordMaps={cordResources.cordMaps}
+          maxAnisotropy={maxAnisotropy}
+          registerOuterGroup={(_, g) => {
+            pinnedGroupRef.current = g;
+          }}
+          registerRollGroup={(_, g) => {
+            pinnedRollRef.current = g;
+          }}
+          onBeadPointerDown={() => {}}
+          onTapBead={() => {}}
+        />
+      )}
+
       {/* Matte Clinical Tray Plane */}
       {!isFocused && (
         <mesh
@@ -1488,6 +1637,7 @@ export function Orchidometer3DBeads({
     slideVel: new Float64Array(chainConfig.specs.length),
     rolls: new Float64Array(chainConfig.specs.length),
     rollVel: new Float64Array(chainConfig.specs.length),
+    wasColliding: false,
     tiltX: 0,
     tiltY: 0,
     swayX: 0,
@@ -1497,6 +1647,13 @@ export function Orchidometer3DBeads({
   });
 
   const [isVertical, setIsVertical] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('orchidometer_sound');
+    return saved === null ? true : saved === 'true';
+  });
+  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [pinnedIdx, setPinnedIdx] = useState(3); // Default 4 mL pubertal onset landmark
 
   const isFocused = focusedId !== null;
   const activeVol = VOLUMES[currentVolumeIdx];
@@ -1611,6 +1768,7 @@ export function Orchidometer3DBeads({
   );
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    ensureWoodAudioReady();
     maybeRequestIosOrientationPermission();
 
     const touchedBead = touchedBeadRef.current;
@@ -1634,6 +1792,7 @@ export function Orchidometer3DBeads({
       dragStartRollRef.current = chainStateRef.current.rolls[idx];
       chainStateRef.current.slideVel[idx] = 0;
       chainStateRef.current.rollVel[idx] = 0;
+      chainStateRef.current.wasColliding = false;
       if (idx !== currentVolumeIdx && !isFocused) {
         triggerHaptic(20);
         onChangeVolumeIdx(idx);
@@ -1707,10 +1866,16 @@ export function Orchidometer3DBeads({
         state.slideVel[idx] = (stepAlongPx / ppm) / dtSec;
         state.cordDirty = true;
 
-        if (hitNeighbor && now - lastBumpHapticAtRef.current > 140) {
-          lastBumpHapticAtRef.current = now;
-          triggerHaptic(12);
+        if (hitNeighbor && !state.wasColliding) {
+          if (soundEnabled) {
+            playWoodClack(Math.min(1, Math.max(0.35, Math.abs(stepAlongPx) / 14)));
+          }
+          if (now - lastBumpHapticAtRef.current > 110) {
+            lastBumpHapticAtRef.current = now;
+            triggerHaptic(12);
+          }
         }
+        state.wasColliding = hitNeighbor;
       }
 
       // 2. Roll bead in-place around its longitudinal cord axis (local X) using perpendicular motion
@@ -1867,7 +2032,7 @@ export function Orchidometer3DBeads({
           antialias: !isSoftwareGl,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.06,
+          toneMappingExposure: 0.98,
         }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -1894,6 +2059,9 @@ export function Orchidometer3DBeads({
           isVertical={isVertical}
           isSoftwareGl={isSoftwareGl}
           theme={theme}
+          soundEnabled={soundEnabled}
+          compareEnabled={compareEnabled}
+          pinnedIdx={pinnedIdx}
           camDragOffsetMmRef={camDragOffsetMmRef}
           dragModeRef={dragModeRef}
           wasDraggedRef={wasDraggedRef}
@@ -1905,92 +2073,178 @@ export function Orchidometer3DBeads({
         />
       </Canvas>
 
-      {/* Top HUD: Clinical Readout Box + Horizontal/Vertical Switch */}
+      {/* Top HUD: Clinical Readout Box + 3D Action Controls + Horizontal/Vertical Switch */}
       {!isFocused && !controlsCollapsed && (
         <div
-          className="pointer-events-none absolute top-2.5 sm:top-3 left-2.5 right-2.5 sm:left-3 sm:right-3 flex flex-wrap items-center justify-between gap-2 z-10"
+          className="pointer-events-none absolute top-2.5 sm:top-3 left-2.5 right-2.5 sm:left-3 sm:right-3 flex flex-wrap items-start justify-between gap-2 z-10"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <div
-            className={`pointer-events-auto border rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-2.5 sm:gap-3 max-w-full ${
-              isDark
-                ? 'bg-[#11151B]/95 border-white/10'
-                : 'bg-white/95 border-slate-200 shadow-xs'
-            }`}
-          >
-            <div className="flex items-baseline gap-1 shrink-0 tabular-nums">
-              <span
-                className={`text-xl sm:text-2xl font-bold leading-none ${
-                  isDark ? stageStyle.textClass : stageStyle.textLightClass
-                }`}
-              >
-                {activeVol}
-              </span>
-              <span className={`text-[11px] sm:text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                mL
-              </span>
-            </div>
-            <div className={`h-5 w-px shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} aria-hidden="true" />
-            <div className="min-w-0">
-              <div
-                className={`tabular-nums text-[11px] sm:text-xs font-medium whitespace-nowrap ${
-                  isDark ? 'text-slate-200' : 'text-slate-800'
-                }`}
-              >
-                {activeWidth} × {activeLen} mm
-              </div>
-              <div className={`text-[11px] flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <span className={`inline-block w-1.5 h-1.5 rounded-xs shrink-0 ${stageStyle.swatchClass}`} />
-                <span className="truncate">
-                  {activeVol <= 3
-                    ? t[lang].stagePrepubertal
-                    : activeVol === 4
-                    ? t[lang].stageOnset
-                    : activeVol <= 12
-                    ? t[lang].stagePubertal
-                    : t[lang].stageAdult}
+          <div className="flex flex-col gap-1.5 max-w-full">
+            <div
+              className={`pointer-events-auto border rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-2.5 sm:gap-3 max-w-full ${
+                isDark
+                  ? 'bg-[#11151B]/95 border-white/10'
+                  : 'bg-white/95 border-slate-200 shadow-xs'
+              }`}
+            >
+              <div className="flex items-baseline gap-1 shrink-0 tabular-nums">
+                <span
+                  className={`text-xl sm:text-2xl font-bold leading-none ${
+                    isDark ? stageStyle.textClass : stageStyle.textLightClass
+                  }`}
+                >
+                  {activeVol}
+                </span>
+                <span className={`text-[11px] sm:text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  mL
                 </span>
               </div>
+              <div className={`h-5 w-px shrink-0 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} aria-hidden="true" />
+              <div className="min-w-0">
+                <div
+                  className={`tabular-nums text-[11px] sm:text-xs font-medium whitespace-nowrap ${
+                    isDark ? 'text-slate-200' : 'text-slate-800'
+                  }`}
+                >
+                  {activeWidth} × {activeLen} mm
+                </div>
+                <div className={`text-[11px] flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className={`inline-block w-1.5 h-1.5 rounded-xs shrink-0 ${stageStyle.swatchClass}`} />
+                  <span className="truncate">
+                    {activeVol <= 3
+                      ? t[lang].stagePrepubertal
+                      : activeVol === 4
+                      ? t[lang].stageOnset
+                      : activeVol <= 12
+                      ? t[lang].stagePubertal
+                      : t[lang].stageAdult}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {compareEnabled && (
+              <div
+                className={`pointer-events-auto border rounded-xl px-2.5 py-1 flex items-center justify-between gap-2 text-[11px] ${
+                  isDark
+                    ? 'bg-[#11151B]/95 border-white/10 text-slate-200'
+                    : 'bg-white/95 border-slate-200 text-slate-700 shadow-xs'
+                }`}
+              >
+                <span className="tabular-nums whitespace-nowrap">
+                  {t[lang].pinnedRefLabel}:{' '}
+                  <strong className={isDark ? 'text-white' : 'text-slate-900'}>
+                    {VOLUMES[pinnedIdx]} mL
+                  </strong>{' '}
+                  ({ORCHIDOMETER_DATA[VOLUMES[pinnedIdx]][1]}×{ORCHIDOMETER_DATA[VOLUMES[pinnedIdx]][0]} mm)
+                </span>
+                {pinnedIdx !== currentVolumeIdx && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(20);
+                      setPinnedIdx(currentVolumeIdx);
+                    }}
+                    className={`px-2 py-0.5 rounded-md font-semibold transition-colors whitespace-nowrap ${
+                      isDark
+                        ? 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30'
+                        : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                    }`}
+                  >
+                    {t[lang].pinUpdateHere} {activeVol} mL
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          <div
-            className={`pointer-events-auto border rounded-xl p-1 flex items-center gap-1 ml-auto ${
-              isDark
-                ? 'bg-[#11151B]/95 border-white/10'
-                : 'bg-white/95 border-slate-200 shadow-xs'
-            }`}
-          >
+          <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 ml-auto">
+            {/* Pin Side-by-Side Compare Toggle */}
             <button
               type="button"
-              onClick={() => selectOrientation(false)}
-              className={`min-h-[38px] px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                !isVertical
+              onClick={() => {
+                triggerHaptic(25);
+                setCompareEnabled((v) => !v);
+              }}
+              className={`min-h-[40px] px-2.5 rounded-xl border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                compareEnabled
                   ? isDark
-                    ? 'bg-white text-slate-950 font-semibold'
-                    : 'bg-slate-900 text-white font-semibold'
+                    ? 'bg-white text-slate-950 border-white font-semibold'
+                    : 'bg-slate-900 text-white border-slate-900 font-semibold'
                   : isDark
-                  ? 'text-slate-300 hover:text-white hover:bg-white/5'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-[#11151B]/95 border-white/10 text-slate-200 hover:text-white'
+                  : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs'
               }`}
             >
-              {t[lang].horizontal}
+              {compareEnabled ? (
+                <Pin className="w-3.5 h-3.5 shrink-0" />
+              ) : (
+                <Columns2 className="w-3.5 h-3.5 shrink-0" />
+              )}
+              <span>{t[lang].pinCompare}</span>
             </button>
+
+            {/* Wood Clack Sound Toggle */}
             <button
               type="button"
-              onClick={() => selectOrientation(true)}
-              className={`min-h-[38px] px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                isVertical
-                  ? isDark
-                    ? 'bg-white text-slate-950 font-semibold'
-                    : 'bg-slate-900 text-white font-semibold'
-                  : isDark
-                  ? 'text-slate-300 hover:text-white hover:bg-white/5'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              aria-label={t[lang].soundLabel}
+              onClick={() => {
+                ensureWoodAudioReady();
+                setSoundEnabled((prev) => {
+                  const next = !prev;
+                  localStorage.setItem('orchidometer_sound', next ? 'true' : 'false');
+                  if (next) playWoodClack(0.5);
+                  return next;
+                });
+              }}
+              className={`min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center transition-colors shrink-0 ${
+                isDark
+                  ? 'bg-[#11151B]/95 border-white/10 text-slate-300 hover:text-white'
+                  : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs'
               }`}
             >
-              {t[lang].vertical}
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 opacity-60" />}
             </button>
+
+            {/* Horizontal / Vertical Orientation Switch */}
+            <div
+              className={`border rounded-xl p-1 flex items-center gap-1 ${
+                isDark
+                  ? 'bg-[#11151B]/95 border-white/10'
+                  : 'bg-white/95 border-slate-200 shadow-xs'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => selectOrientation(false)}
+                className={`min-h-[32px] px-2.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  !isVertical
+                    ? isDark
+                      ? 'bg-white text-slate-950 font-semibold'
+                      : 'bg-slate-900 text-white font-semibold'
+                    : isDark
+                    ? 'text-slate-300 hover:text-white hover:bg-white/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t[lang].horizontal}
+              </button>
+              <button
+                type="button"
+                onClick={() => selectOrientation(true)}
+                className={`min-h-[32px] px-2.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  isVertical
+                    ? isDark
+                      ? 'bg-white text-slate-950 font-semibold'
+                      : 'bg-slate-900 text-white font-semibold'
+                    : isDark
+                    ? 'text-slate-300 hover:text-white hover:bg-white/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t[lang].vertical}
+              </button>
+            </div>
           </div>
         </div>
       )}

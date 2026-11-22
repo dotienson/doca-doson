@@ -26,20 +26,150 @@ export const CARD_WIDTH_MM = 53.98;
 export const CARD_HEIGHT_MM = 85.60;
 export const RULER_LENGTH_MM = 50; // 5 cm
 
-export const DEVICE_PRESETS = [
-  { nameVi: 'Tùy chỉnh (Nhập tay)', nameEn: 'Custom (Manual)', size: 0 },
-  { nameVi: 'iPhone 12/13 mini', nameEn: 'iPhone 12/13 mini', size: 5.4 },
-  { nameVi: 'iPhone X/XS/11 Pro', nameEn: 'iPhone X/XS/11 Pro', size: 5.8 },
-  { nameVi: 'iPhone 11/12/13/14/15/16', nameEn: 'iPhone 11/12/13/14/15/16', size: 6.1 },
-  { nameVi: 'iPhone 15/16 Pro', nameEn: 'iPhone 15/16 Pro', size: 6.1 },
-  { nameVi: 'iPhone 11 Pro Max/XS Max', nameEn: 'iPhone 11 Pro Max/XS Max', size: 6.5 },
-  { nameVi: 'iPhone 12/13/14 Pro Max', nameEn: 'iPhone 12/13/14 Pro Max', size: 6.7 },
-  { nameVi: 'iPhone 14/15/16 Plus', nameEn: 'iPhone 14/15/16 Plus', size: 6.7 },
-  { nameVi: 'iPhone 15/16 Pro Max', nameEn: 'iPhone 15/16 Pro Max', size: 6.7 },
-  { nameVi: 'Galaxy S23/S24', nameEn: 'Galaxy S23/S24', size: 6.1 },
-  { nameVi: 'Galaxy S23+/S24+', nameEn: 'Galaxy S23+/S24+', size: 6.6 },
-  { nameVi: 'Galaxy S23/S24 Ultra', nameEn: 'Galaxy S23/S24 Ultra', size: 6.8 },
+export interface DevicePreset {
+  id: string;
+  nameVi: string;
+  nameEn: string;
+  size: number;
+}
+
+export const DEVICE_PRESETS: DevicePreset[] = [
+  { id: 'custom', nameVi: 'Tùy chỉnh (Nhập tay)', nameEn: 'Custom (Manual)', size: 0 },
+  // iPhone
+  { id: 'iphone-mini', nameVi: 'iPhone 12 / 13 mini', nameEn: 'iPhone 12 / 13 mini', size: 5.4 },
+  { id: 'iphone-xs', nameVi: 'iPhone X / XS / 11 Pro', nameEn: 'iPhone X / XS / 11 Pro', size: 5.8 },
+  { id: 'iphone-61', nameVi: 'iPhone 11 / 12 / 13 / 14 / 15 / 16 / 16e', nameEn: 'iPhone 11–16 / 16e', size: 6.1 },
+  { id: 'iphone-16pro', nameVi: 'iPhone 16 Pro', nameEn: 'iPhone 16 Pro', size: 6.3 },
+  { id: 'iphone-xsmax', nameVi: 'iPhone XS Max / 11 Pro Max', nameEn: 'iPhone XS Max / 11 Pro Max', size: 6.5 },
+  { id: 'iphone-plus-pm', nameVi: 'iPhone 12–15 Pro Max / 14–16 Plus', nameEn: 'iPhone 12–15 Pro Max / 14–16 Plus', size: 6.7 },
+  { id: 'iphone-16pm', nameVi: 'iPhone 16 Pro Max', nameEn: 'iPhone 16 Pro Max', size: 6.9 },
+  // iPad
+  { id: 'ipad-mini', nameVi: 'iPad mini 6 / 7', nameEn: 'iPad mini 6 / 7', size: 8.3 },
+  { id: 'ipad-102', nameVi: 'iPad Gen 9', nameEn: 'iPad 9th Gen', size: 10.2 },
+  { id: 'ipad-109', nameVi: 'iPad Gen 10 / Air 4–5', nameEn: 'iPad 10th Gen / Air 4–5', size: 10.9 },
+  { id: 'ipad-11', nameVi: 'iPad Air M2 11" / iPad Pro 11"', nameEn: 'iPad Air / Pro 11"', size: 11.0 },
+  { id: 'ipad-13', nameVi: 'iPad Air 13" / iPad Pro 12.9–13"', nameEn: 'iPad Air / Pro 12.9–13"', size: 12.9 },
+  // Samsung Galaxy
+  { id: 'galaxy-s', nameVi: 'Samsung Galaxy S23 / S24 / S25', nameEn: 'Samsung Galaxy S23 / S24 / S25', size: 6.2 },
+  { id: 'galaxy-a', nameVi: 'Samsung Galaxy A35 / A55 / S24+', nameEn: 'Samsung Galaxy A35 / A55 / S24+', size: 6.6 },
+  { id: 'galaxy-s25plus', nameVi: 'Samsung Galaxy S25+ / Z Flip 5–6', nameEn: 'Samsung Galaxy S25+ / Z Flip 5–6', size: 6.7 },
+  { id: 'galaxy-ultra', nameVi: 'Samsung Galaxy S23 / S24 / S25 Ultra', nameEn: 'Samsung Galaxy S23 / S24 / S25 Ultra', size: 6.8 },
+  { id: 'galaxy-fold', nameVi: 'Samsung Galaxy Z Fold 5 / 6 (Màn chính)', nameEn: 'Samsung Galaxy Z Fold 5 / 6 (Main)', size: 7.6 },
+  // Xiaomi & OPPO
+  { id: 'xiaomi-compact', nameVi: 'Xiaomi 13 / 14 / 15', nameEn: 'Xiaomi 13 / 14 / 15', size: 6.36 },
+  { id: 'xiaomi-redmi', nameVi: 'Xiaomi 14T / Redmi Note 12–14', nameEn: 'Xiaomi 14T / Redmi Note 12–14', size: 6.67 },
+  { id: 'oppo-reno', nameVi: 'OPPO Reno 11 / 12 / Find X', nameEn: 'OPPO Reno 11 / 12 / Find X', size: 6.7 },
 ];
+
+export interface DetectedDeviceInfo {
+  presetId: string;
+  size: number;
+  widthPx: number;
+  heightPx: number;
+  dpr: number;
+  matched: boolean;
+}
+
+export function detectDevicePreset(): DetectedDeviceInfo {
+  if (typeof window === 'undefined') {
+    return { presetId: 'iphone-xsmax', size: 6.5, widthPx: 414, heightPx: 896, dpr: 3, matched: false };
+  }
+
+  const rawW = window.screen.width || 390;
+  const rawH = window.screen.height || 844;
+  const w = Math.min(rawW, rawH);
+  const h = Math.max(rawW, rawH);
+  const dpr = Math.round((window.devicePixelRatio || 1) * 100) / 100;
+  const ua = navigator.userAgent.toLowerCase();
+  const isIPadUA =
+    /ipad/.test(ua) ||
+    (navigator.platform === 'MacIntel' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1);
+  const isIPhoneUA = /iphone|ipod/.test(ua);
+
+  // Exact logical viewport matching for Apple devices
+  if (isIPadUA || (w >= 740 && h >= 1000 && dpr >= 1.8 && dpr <= 2.2)) {
+    if (w <= 760 && h <= 1150) {
+      return { presetId: 'ipad-mini', size: 8.3, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w <= 815 && h <= 1100) {
+      return { presetId: 'ipad-102', size: 10.2, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w <= 825 && h <= 1190) {
+      return { presetId: 'ipad-109', size: 10.9, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w <= 860 && h <= 1230) {
+      return { presetId: 'ipad-11', size: 11.0, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w >= 1000) {
+      return { presetId: 'ipad-13', size: 12.9, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+  }
+
+  if (isIPhoneUA) {
+    if (w === 375 && h === 812) {
+      return { presetId: 'iphone-mini', size: 5.4, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w === 390 || w === 393) {
+      return { presetId: 'iphone-61', size: 6.1, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w === 402 && h >= 870) {
+      return { presetId: 'iphone-16pro', size: 6.3, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w === 414 && h === 896) {
+      return { presetId: 'iphone-xsmax', size: 6.5, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w === 428 || w === 430) {
+      return { presetId: 'iphone-plus-pm', size: 6.7, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w >= 440) {
+      return { presetId: 'iphone-16pm', size: 6.9, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+  }
+
+  // Android / Foldable / Desktop heuristics by CSS resolution & UA brand
+  if (w >= 650 && w <= 780 && h <= 920) {
+    return { presetId: 'galaxy-fold', size: 7.6, widthPx: w, heightPx: h, dpr, matched: true };
+  }
+
+  if (/xiaomi|redmi|poco|2312|240|2210/.test(ua)) {
+    if (w <= 395 && h <= 865 && dpr >= 2.9) {
+      return { presetId: 'xiaomi-compact', size: 6.36, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    return { presetId: 'xiaomi-redmi', size: 6.67, widthPx: w, heightPx: h, dpr, matched: true };
+  }
+
+  if (/oppo|cph|reno|find/.test(ua)) {
+    return { presetId: 'oppo-reno', size: 6.7, widthPx: w, heightPx: h, dpr, matched: true };
+  }
+
+  if (/samsung|sm-/.test(ua)) {
+    if (w <= 365 && h <= 800) {
+      return { presetId: 'galaxy-s', size: 6.2, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    if (w >= 408 || h >= 890) {
+      return { presetId: 'galaxy-ultra', size: 6.8, widthPx: w, heightPx: h, dpr, matched: true };
+    }
+    return { presetId: 'galaxy-a', size: 6.6, widthPx: w, heightPx: h, dpr, matched: true };
+  }
+
+  // Fallback aspect estimation for general phones
+  if (w <= 480) {
+    const estimated = h >= 900 ? 'galaxy-ultra' : h >= 840 ? 'galaxy-a' : 'iphone-61';
+    const preset = DEVICE_PRESETS.find((p) => p.id === estimated)!;
+    return { presetId: preset.id, size: preset.size, widthPx: w, heightPx: h, dpr, matched: false };
+  }
+
+  // Desktop / Monitor fallback: estimate diagonal roughly from 96 CSS PPI
+  const diagIn = Math.round((Math.hypot(rawW, rawH) / 96) * 10) / 10;
+  return {
+    presetId: 'custom',
+    size: Math.max(10, Math.min(34, diagIn)),
+    widthPx: w,
+    heightPx: h,
+    dpr,
+    matched: false,
+  };
+}
 
 export interface StageStyle {
   key: 'prepubertal' | 'onset' | 'pubertal' | 'adult';
@@ -118,8 +248,8 @@ export const triggerHaptic = (pattern: number | number[] = 50) => {
 
 export const t = {
   vi: {
-    brandTitle: "Doca Doson",
-    appName: "Thước Prader Ảo",
+    brandTitle: "ePra Dr.Son",
+    appName: "Thước Prader điện tử",
     consentTitle: "Lưu ý an toàn & chuyên môn",
     consentWarning1: "Không chạm trực tiếp màn hình thiết bị vào đối tượng khám.",
     consentWarning2: "Phương pháp đối chiếu hình ảnh chỉ mang tính sàng lọc khi chưa có sẵn dụng cụ khám, không thay thế siêu âm đo thể tích hoặc thước Prader chuyên dụng.",
@@ -139,7 +269,10 @@ export const t = {
     both: "Cả 2",
     triple: "3 Kích thước",
     beads: "Chuỗi hạt 3D",
-    screenPrompt: "Chọn dòng máy đang sử dụng hoặc nhập đường chéo màn hình (inch).",
+    screenPrompt: "Chọn dòng máy đang sử dụng hoặc bấm Tự nhận diện màn hình.",
+    autoDetectBtn: "Tự nhận diện",
+    autoDetectedNote: "Đã gợi ý theo màn hình",
+    autoDetectCustomNote: "Không trùng mẫu cố định — khuyến nghị kiểm tra lại bằng thước 5cm.",
     cardPrompt: "Đặt thẻ ATM / CCCD trùng khớp với khung nét đứt",
     rulerPrompt: "Áp thước kẻ vật lý dọc theo vạch chia 0 – 5 cm",
     sliderHint: "Kéo hoặc nhấn − / + để chỉnh từng pixel",
@@ -152,11 +285,11 @@ export const t = {
     stageAdult: "Trưởng thành (15–25 mL)",
     guideTitle: "Quy trình sử dụng lâm sàng",
     guide1: "Thông báo cho trẻ và gia đình về quy trình đối chiếu hình ảnh sàng lọc.",
-    guide2: "Hiệu chuẩn màn hình với thước kẻ, thẻ chuẩn hoặc model máy; giải thích sơ bộ về các mốc kích thước.",
+    guide2: "Hiệu chuẩn màn hình với thước kẻ, thẻ chuẩn hoặc model máy; kiểm tra bằng vạch 1 cm nếu cần.",
     guide3: "Sát khuẩn tay; đeo găng tay khám ở tay bộc lộ đối tượng, tay còn lại cầm thiết bị song song để đối chiếu (hoặc nhờ người hỗ trợ cầm máy).",
-    guide4: "Dùng phím mũi tên hoặc chạm trực tiếp vào hạt để đổi thể tích (mL). Chạm vào khối elip để vào Focus Mode nền đen.",
+    guide4: "Kéo trượt các hạt 3D dọc dây hoặc bật So sánh để ghim một hạt mốc đối chiếu song song.",
     guide5: "Ghi nhận kết quả sàng lọc và đối chiếu bằng thước Prader vật lý hoặc siêu âm khi có chỉ định.",
-    guideNote: "Lưu ý: Kích thước elip ở chế độ 2D và chế độ So sánh 1:1 mm trong Chuỗi hạt 3D được tính theo hệ số hiệu chuẩn thực tế. Luôn kiểm tra lại hiệu chuẩn trước mỗi phiên khám.",
+    guideNote: "Lưu ý: Kích thước elip ở chế độ 2D và Chuỗi hạt 3D được khóa tỷ lệ 1:1 mm theo hiệu chuẩn thực tế. Luôn kiểm tra lại zoom trình duyệt trước mỗi phiên khám.",
     understood: "Đóng hướng dẫn",
     calibFactor: "Hệ số màn hình",
     promoTitle: "Đăng nhập phiên khám",
@@ -169,6 +302,11 @@ export const t = {
     premiumCodeLabel: "Mã Premium",
     premiumOptionalHint: "Để trống nếu chưa có",
     premiumCodePlaceholder: "Không bắt buộc — để trống nếu chưa có",
+    rememberLabel: "Ghi nhớ đăng nhập",
+    remember24h: "24 giờ",
+    remember7d: "7 ngày",
+    signOut: "Đăng xuất",
+    signedInAs: "Tài khoản",
     loginButton: "Đăng nhập",
     accountRequired: "Vui lòng nhập tên tài khoản.",
     passcodeInvalid: "Passcode chưa hợp lệ.",
@@ -187,21 +325,28 @@ export const t = {
     toggle2D: "Phẳng 2D",
     guideButton: "Hướng dẫn",
     recalibrateButton: "Hiệu chuẩn",
-    viewChain3D: "Chuỗi 3D xoay",
-    viewActual11: "Chuẩn 1:1 mm",
-    finishResin: "Nhựa y tế",
-    finishWood: "Gỗ sồi",
-    finishAcrylic: "Acrylic mờ",
-    resetCam: "Đặt lại góc nhìn",
+    quickRulerLabel: "1 cm chuẩn",
+    quickRulerBtn: "1 cm",
+    pinCompare: "So sánh",
+    pinUpdateHere: "Ghim mốc",
+    pinnedRefLabel: "Mốc ghim",
+    soundLabel: "Âm gõ gỗ",
     focusExitHint: "Chạm nền đen hoặc hạt để thoát Focus Mode",
     controlsHide: "Thu gọn",
     controlsShow: "Điều khiển",
-    dragHint3D: "Kéo hạt trượt dọc dây · Vuốt ngang để lăn hạt · Chạm hạt để Focus",
+    dragHint3D: "Kéo trượt dọc dây · Vuốt ngang để lăn · Chạm hạt đang chọn để Focus",
     dragHint11: "Kích thước chuẩn 1:1 mm theo màn hình đã hiệu chuẩn",
     webglFallback: "Trình duyệt không hỗ trợ tăng tốc WebGL — đang dùng chế độ mô phỏng 2D chuẩn xác.",
+    pwaInstall: "Cài đặt App",
+    pwaInstallShort: "Thêm vào máy",
+    pwaIosTitle: "Cài đặt trên iPhone / iPad",
+    pwaIosStep1: "Mở bằng trình duyệt Safari và chạm biểu tượng Chia sẻ (Share).",
+    pwaIosStep2: "Cuộn xuống và chọn “Thêm vào Màn hình chính” (Add to Home Screen).",
+    pwaIosStep3: "Chạm “Thêm” để mở toàn màn hình và dùng ngoại tuyến.",
+    offlineMode: "Chế độ ngoại tuyến — Dữ liệu khám sẵn sàng",
   },
   en: {
-    brandTitle: "Doca Doson",
+    brandTitle: "ePra Dr.Son",
     appName: "Digital Orchidometer",
     consentTitle: "Clinical & Safety Notice",
     consentWarning1: "Do not touch the device screen directly to the examination subject.",
@@ -222,7 +367,10 @@ export const t = {
     both: "Dual Axis",
     triple: "Triple",
     beads: "3D Beads",
-    screenPrompt: "Select your device preset or enter diagonal screen size (inches).",
+    screenPrompt: "Select your device preset or tap Auto-detect display size.",
+    autoDetectBtn: "Auto-detect",
+    autoDetectedNote: "Suggested from screen",
+    autoDetectCustomNote: "Custom screen — please verify with the 5cm ruler if needed.",
     cardPrompt: "Align a standard 53.98 × 85.60 mm card inside the dashed frame",
     rulerPrompt: "Align a physical ruler along the 0 – 5 cm calibration scale",
     sliderHint: "Drag slider or tap − / + for pixel precision",
@@ -235,11 +383,11 @@ export const t = {
     stageAdult: "Adult Range (15–25 mL)",
     guideTitle: "Clinical Screening Protocol",
     guide1: "Explain the non-contact visual screening procedure to the patient and family.",
-    guide2: "Calibrate the screen using a physical ruler, standard card, or verified device diagonal.",
+    guide2: "Calibrate the screen using a physical ruler, card, or device diagonal; verify anytime with the 1 cm edge ruler.",
     guide3: "Sanitize hands; wear an examination glove on the exposing hand and hold the device parallel with the ungloved hand (or with an assistant).",
-    guide4: "Step through volumes using the dock controls or tap any bead directly. Tap the active ellipsoid to enter Focus Mode.",
+    guide4: "Slide 3D beads along the cord or enable Compare to pin a reference bead side-by-side.",
     guide5: "Document the screening estimate and confirm with a physical Prader orchidometer or ultrasound when clinically indicated.",
-    guideNote: "Note: 2D projections and the 3D Bead Chain are locked 1:1 to your calibrated px/mm display scale. Re-verify calibration before each clinical session.",
+    guideNote: "Note: 2D projections and the 3D Bead Chain are locked 1:1 to your calibrated px/mm display scale. Re-verify browser zoom before each session.",
     understood: "Close Protocol",
     calibFactor: "Display Scale",
     promoTitle: "Clinical Session Sign In",
@@ -252,6 +400,11 @@ export const t = {
     premiumCodeLabel: "Premium Code",
     premiumOptionalHint: "Optional",
     premiumCodePlaceholder: "Leave blank if none",
+    rememberLabel: "Remember session",
+    remember24h: "24h",
+    remember7d: "7d",
+    signOut: "Sign out",
+    signedInAs: "Account",
     loginButton: "Sign In",
     accountRequired: "Please enter an account name.",
     passcodeInvalid: "Invalid passcode.",
@@ -270,17 +423,24 @@ export const t = {
     toggle2D: "2D Flat",
     guideButton: "Protocol",
     recalibrateButton: "Calibrate",
-    viewChain3D: "3D Chain",
-    viewActual11: "1:1 mm",
-    finishResin: "Resin",
-    finishWood: "Wood",
-    finishAcrylic: "Matte",
-    resetCam: "Reset View",
+    quickRulerLabel: "1 cm check",
+    quickRulerBtn: "1 cm",
+    pinCompare: "Compare",
+    pinUpdateHere: "Pin ref",
+    pinnedRefLabel: "Pinned",
+    soundLabel: "Wood clack",
     focusExitHint: "Tap background or bead to exit Focus Mode",
     controlsHide: "Hide",
     controlsShow: "Controls",
-    dragHint3D: "Drag bead along cord · Swipe across cord to roll · Tap active bead to Focus",
+    dragHint3D: "Drag along cord · Swipe to roll · Tap active bead for Focus",
     dragHint11: "True 1:1 mm calibrated display scale",
     webglFallback: "WebGL hardware context unavailable — switched to precision 2D calibration view.",
+    pwaInstall: "Install App",
+    pwaInstallShort: "Add to Home",
+    pwaIosTitle: "Install on iPhone / iPad",
+    pwaIosStep1: "Open in Safari and tap the Share button.",
+    pwaIosStep2: "Scroll down and tap “Add to Home Screen”.",
+    pwaIosStep3: "Tap “Add” for full-screen & offline screening.",
+    offlineMode: "Offline Mode — Ready for screening",
   },
 } as const;
